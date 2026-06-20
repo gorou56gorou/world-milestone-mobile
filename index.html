@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="わんこそば">
+<meta name="theme-color" content="#FFA500">
+<title>🍜 わんこそば</title>
+<link rel="manifest" href="data:application/json,{%22name%22:%22わんこそば%22,%22short_name%22:%22わんこそば%22,%22display%22:%22standalone%22,%22background_color%22:%22%23faf9f7%22,%22theme_color%22:%22%23FFA500%22,%22icons%22:[]}">
+<style>
+  :root{ --bg:#faf9f7; --card:#fff; --line:#ece8e1; --ink:#2b2723; --sub:#8a8378; --accent:#f59e0b; --accentink:#7c4a02; }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;background:var(--bg);color:var(--ink);
+       padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  header{position:sticky;top:0;background:var(--bg);padding:14px 16px 8px;z-index:5}
+  h1{font-size:20px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+  .meta{font-size:12px;color:var(--sub)}
+  .add{display:flex;gap:8px;margin-top:8px}
+  .add input{flex:1;padding:12px;border:1px solid var(--line);border-radius:12px;font-size:16px;background:#fff}
+  .btn{border:none;border-radius:12px;padding:12px 14px;font-size:15px;font-weight:600;background:var(--accent);color:#fff;cursor:pointer}
+  .btn:active{transform:scale(.97)}
+  .btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+  main{padding:6px 12px 80px}
+  .sec{margin:14px 4px 6px;font-size:13px;font-weight:700;color:var(--sub);letter-spacing:.04em}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:8px 0;display:flex;gap:10px;align-items:flex-start}
+  .card .body{flex:1;min-width:0}
+  .card .ttl{font-size:15px;line-height:1.35;word-break:break-word}
+  .card .scope{font-size:11px;color:var(--sub);margin-top:4px}
+  .id{font-size:11px;font-weight:700;color:var(--accentink);background:#fff3e0;border-radius:6px;padding:1px 6px;margin-right:6px}
+  .done .ttl{color:var(--sub);text-decoration:line-through}
+  .check{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:#fff;flex:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+  .check:active{transform:scale(.92)}
+  .check.is-done{background:var(--accent);border-color:var(--accent);color:#fff}
+  .empty{color:var(--sub);font-size:14px;text-align:center;padding:40px 0}
+  .setup{padding:18px}
+  .setup label{display:block;font-size:13px;color:var(--sub);margin:12px 0 4px}
+  .setup input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font-size:15px}
+  .note{font-size:12px;color:var(--sub);line-height:1.6;margin-top:12px}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#2b2723;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:20;max-width:90%}
+  .toast.show{opacity:1}
+  .topbar{display:flex;justify-content:space-between;align-items:center}
+  .gear{background:none;border:none;font-size:20px;cursor:pointer;color:var(--sub)}
+  a{color:var(--accentink)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const LS = 'wm-config-v1';
+const cfg = JSON.parse(localStorage.getItem(LS) || '{}');
+cfg.owner = cfg.owner || 'gorou56gorou';
+cfg.repo  = cfg.repo  || 'world-milestone';
+cfg.branch= cfg.branch|| 'main';
+
+const $ = (h)=>{const t=document.createElement('template');t.innerHTML=h.trim();return t.content.firstChild;};
+const app = document.getElementById('app');
+const toastEl = document.getElementById('toast');
+let toastTimer;
+function toast(msg){toastEl.textContent=msg;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('show'),2200);}
+
+const b64enc = s => btoa(unescape(encodeURIComponent(s)));
+const b64dec = s => decodeURIComponent(escape(atob(s.replace(/\n/g,''))));
+const today  = ()=> new Date().toISOString().slice(0,10);
+const encPath= p => p.split('/').map(encodeURIComponent).join('/');
+
+async function gh(path, opts={}){
+  const r = await fetch(`https://api.github.com${path}`, {
+    ...opts,
+    headers:{Authorization:`Bearer ${cfg.token}`, Accept:'application/vnd.github+json', ...(opts.headers||{})}
+  });
+  if(!r.ok){ throw new Error(`${r.status}: ${(await r.text()).slice(0,140)}`); }
+  return r.status===204 ? null : r.json();
+}
+
+// ---- TASKS.md パーサ ----
+function parseTasks(md){
+  const groups = {now:[],next:[],blocked:[],later:[],done:[]};
+  let cur = null;
+  for(const line of md.split('\n')){
+    const h = line.match(/^##\s+(.+)/);
+    if(h){
+      const t=h[1];
+      cur = /Now/.test(t)?'now': /Next/.test(t)?'next': /Blocked/.test(t)?'blocked': /Later/.test(t)?'later': /Done/.test(t)?'done': null;
+      continue;
+    }
+    const m = line.match(/^-\s+\*\*#(\d+)\*\*\s+(.+?)\s+·\s+`(.+?)`\s+·\s+\[[^\]]+\]\(([^)]+)\)/);
+    if(m && cur){ groups[cur].push({id:m[1], title:m[2].trim(), scope:m[3], path:decodeURI(m[4])}); }
+  }
+  return groups;
+}
+
+const SEC = [['now','🔥 いま (着手中)'],['next','⏭️ つぎ (待機)'],['blocked','🚧 詰まり'],['later','🗓️ 寝かせ'],['done','✅ 完了']];
+
+async function load(){
+  render(`<header><div class="topbar"><h1>🍜 わんこそば</h1></div><div class="meta">読み込み中…</div></header>`);
+  let groups, genLine='';
+  try{
+    const data = await gh(`/repos/${cfg.owner}/${cfg.repo}/contents/TASKS.md?ref=${cfg.branch}`);
+    const md = b64dec(data.content);
+    genLine = (md.match(/未完了[^\n]*/)||[''])[0];
+    groups = parseTasks(md);
+  }catch(e){
+    if(String(e).startsWith('401')||String(e).startsWith('404')){ return setup(`認証に失敗しました (${e.message}). トークンを確認してください。`); }
+    return render(`<header><h1>🍜 わんこそば</h1></header><main><div class="empty">読み込みエラー<br>${e.message}</div><div style="text-align:center"><button class="btn ghost" onclick="setup()">設定</button></div></main>`);
+  }
+  let html = `<header>
+    <div class="topbar"><h1>🍜 わんこそば</h1><button class="gear" onclick="setup()">⚙️</button></div>
+    <div class="meta">${genLine||''}　<a href="#" onclick="load();return false">↻更新</a></div>
+    <div class="add"><input id="cap" placeholder="やること（雑でOK）" enterkeyhint="send"><button class="btn" onclick="addTask()">追加</button></div>
+  </header><main>`;
+  for(const [key,label] of SEC){
+    const items = groups[key];
+    if(!items.length) continue;
+    html += `<div class="sec">${label}　${items.length}</div>`;
+    for(const t of items){
+      const done = key==='done';
+      html += `<div class="card ${done?'done':''}">
+        <button class="check ${done?'is-done':''}" ${done?'disabled':''} onclick="complete('${t.id}', this)" data-path="${encodeURIComponent(t.path)}">${done?'✓':''}</button>
+        <div class="body"><div class="ttl"><span class="id">#${t.id}</span>${escapeHtml(t.title)}</div>
+        <div class="scope">${escapeHtml(t.scope)}</div></div>
+      </div>`;
+    }
+  }
+  if(!SEC.some(([k])=>groups[k].length)) html += `<div class="empty">タスクはありません 🎉</div>`;
+  html += `</main>`;
+  render(html);
+  const cap = document.getElementById('cap');
+  cap && cap.addEventListener('keydown', e=>{ if(e.key==='Enter') addTask(); });
+}
+
+function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+async function addTask(){
+  const inp = document.getElementById('cap');
+  const text = (inp.value||'').trim();
+  if(!text) return;
+  inp.disabled = true;
+  try{
+    await gh(`/repos/${cfg.owner}/${cfg.repo}/issues`, {method:'POST',
+      body: JSON.stringify({title:`[INBOX] ${text}`, labels:['inbox']})});
+    inp.value=''; toast('受信箱に追加しました（次回トリアージで配置）');
+  }catch(e){ toast('追加失敗: '+e.message); }
+  inp.disabled=false; inp.focus();
+}
+
+async function complete(id, btn){
+  const path = decodeURIComponent(btn.dataset.path);
+  btn.disabled=true; btn.classList.add('is-done'); btn.textContent='✓';
+  try{
+    const enc = encPath(path);
+    const f = await gh(`/repos/${cfg.owner}/${cfg.repo}/contents/${enc}?ref=${cfg.branch}`);
+    let c = b64dec(f.content);
+    c = /^status:.*$/m.test(c) ? c.replace(/^status:.*$/m,'status: completed') : c.replace(/^---\n/,'---\nstatus: completed\n');
+    c = /^completed:.*$/m.test(c) ? c.replace(/^completed:.*$/m,`completed: ${today()}`) : c.replace(/^---\n/,`---\ncompleted: ${today()}\n`);
+    await gh(`/repos/${cfg.owner}/${cfg.repo}/contents/${enc}`, {method:'PUT',
+      body: JSON.stringify({message:`done: #${id} (mobile)`, content:b64enc(c), sha:f.sha, branch:cfg.branch})});
+    toast(`#${id} 完了。知識昇格をクラウドで実行中…`);
+    setTimeout(load, 4000);
+  }catch(e){ toast('完了失敗: '+e.message); btn.disabled=false; }
+}
+
+function setup(msg){
+  render(`<header><h1>🍜 わんこそば 設定</h1></header>
+  <div class="setup">
+    ${msg?`<div class="note" style="color:#b91c1c">${msg}</div>`:''}
+    <label>GitHub トークン (Fine-grained PAT)</label>
+    <input id="s_token" type="password" placeholder="github_pat_..." value="${cfg.token||''}">
+    <label>オーナー</label><input id="s_owner" value="${cfg.owner}">
+    <label>リポジトリ</label><input id="s_repo" value="${cfg.repo}">
+    <label>ブランチ</label><input id="s_branch" value="${cfg.branch}">
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="btn" onclick="saveCfg()">保存して開く</button>
+      ${cfg.token?'<button class="btn ghost" onclick="load()">戻る</button>':''}
+    </div>
+    <div class="note">
+      トークンは<b>この端末内だけ</b>に保存されます（どこにも送信しません）。<br>
+      発行: GitHub → Settings → Developer settings → <b>Fine-grained tokens</b> → このリポのみ許可、権限は <b>Contents: Read/Write</b> と <b>Issues: Read/Write</b>。期限付き推奨。いつでも失効できます。
+    </div>
+  </div>`);
+}
+function saveCfg(){
+  cfg.token = document.getElementById('s_token').value.trim();
+  cfg.owner = document.getElementById('s_owner').value.trim();
+  cfg.repo  = document.getElementById('s_repo').value.trim();
+  cfg.branch= document.getElementById('s_branch').value.trim()||'main';
+  localStorage.setItem(LS, JSON.stringify(cfg));
+  load();
+}
+function render(h){app.innerHTML=h;}
+
+cfg.token ? load() : setup();
+</script>
+</body>
+</html>

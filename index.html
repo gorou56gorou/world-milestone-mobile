@@ -6,43 +6,194 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="わんこそば">
-<meta name="theme-color" content="#FFA500">
+<meta name="theme-color" content="#f8f6f1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16150f" media="(prefers-color-scheme: dark)">
 <title>🍜 わんこそば</title>
-<link rel="manifest" href="data:application/json,{%22name%22:%22わんこそば%22,%22short_name%22:%22わんこそば%22,%22display%22:%22standalone%22,%22background_color%22:%22%23faf9f7%22,%22theme_color%22:%22%23FFA500%22,%22icons%22:[]}">
+<link rel="manifest" href="data:application/json,{%22name%22:%22わんこそば%22,%22short_name%22:%22わんこそば%22,%22display%22:%22standalone%22,%22background_color%22:%22%23f8f6f1%22,%22theme_color%22:%22%23f8f6f1%22,%22icons%22:[]}">
 <style>
-  :root{ --bg:#faf9f7; --card:#fff; --line:#ece8e1; --ink:#2b2723; --sub:#8a8378; --accent:#f59e0b; --accentink:#7c4a02; }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;background:var(--bg);color:var(--ink);
-       padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
-  header{position:sticky;top:0;background:var(--bg);padding:14px 16px 8px;z-index:5}
-  h1{font-size:20px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
-  .meta{font-size:12px;color:var(--sub)}
-  .add{display:flex;gap:8px;margin-top:8px}
-  .add input{flex:1;padding:12px;border:1px solid var(--line);border-radius:12px;font-size:16px;background:#fff}
-  .btn{border:none;border-radius:12px;padding:12px 14px;font-size:15px;font-weight:600;background:var(--accent);color:#fff;cursor:pointer}
-  .btn:active{transform:scale(.97)}
-  .btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
-  main{padding:6px 12px 80px}
-  .sec{margin:14px 4px 6px;font-size:13px;font-weight:700;color:var(--sub);letter-spacing:.04em}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:8px 0;display:flex;gap:10px;align-items:flex-start}
-  .card .body{flex:1;min-width:0}
-  .card .ttl{font-size:15px;line-height:1.35;word-break:break-word}
-  .card .scope{font-size:11px;color:var(--sub);margin-top:4px}
-  .id{font-size:11px;font-weight:700;color:var(--accentink);background:#fff3e0;border-radius:6px;padding:1px 6px;margin-right:6px}
-  .done .ttl{color:var(--sub);text-decoration:line-through}
-  .check{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:#fff;flex:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
-  .check:active{transform:scale(.92)}
-  .check.is-done{background:var(--accent);border-color:var(--accent);color:#fff}
-  .empty{color:var(--sub);font-size:14px;text-align:center;padding:40px 0}
-  .setup{padding:18px}
-  .setup label{display:block;font-size:13px;color:var(--sub);margin:12px 0 4px}
-  .setup input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font-size:15px}
-  .note{font-size:12px;color:var(--sub);line-height:1.6;margin-top:12px}
-  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#2b2723;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:20;max-width:90%}
-  .toast.show{opacity:1}
-  .topbar{display:flex;justify-content:space-between;align-items:center}
-  .gear{background:none;border:none;font-size:20px;cursor:pointer;color:var(--sub)}
-  a{color:var(--accentink)}
+:root{
+  --bg:#f8f6f1; --panel:#fffdf9; --line:#e7e1d6; --line2:#f0ebe2;
+  --ink:#241f19; --sub:#8d8478; --faint:#a9a094;
+  --accent:#d97706; --accent-soft:#fdf0dc; --accent-ink:#8a4d05;
+  --queue:#7c6f9f; --queue-soft:#f1eefa; --queue-line:#cfc5e8;
+  --danger:#b4341f;
+  --shadow:0 1px 2px rgba(60,50,35,.05), 0 4px 14px rgba(60,50,35,.045);
+  --radius:16px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#16150f; --panel:#201e17; --line:#332f25; --line2:#2a2720;
+    --ink:#f0ebe0; --sub:#9c9385; --faint:#7d7466;
+    --accent:#f0a340; --accent-soft:#33260f; --accent-ink:#f5c884;
+    --queue:#a99ad0; --queue-soft:#241f33; --queue-line:#3d3552;
+    --danger:#e8705a;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{overscroll-behavior-y:contain}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  font-size:16px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);
+}
+
+/* ---------- header ---------- */
+header{
+  position:sticky;top:0;z-index:10;background:var(--bg);
+  padding:calc(env(safe-area-inset-top) + 12px) 16px 10px;
+  border-bottom:1px solid transparent;transition:border-color .2s;
+}
+header.stuck{border-bottom-color:var(--line)}
+.bar{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+h1{font-size:19px;font-weight:800;letter-spacing:.01em;margin:0;display:flex;align-items:center;gap:7px}
+h1 .bowl{font-size:20px}
+.count{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;white-space:nowrap}
+.count b{color:var(--ink);font-weight:700}
+.gear{background:none;border:none;font-size:18px;color:var(--faint);
+  width:40px;height:40px;margin:-8px -10px -8px 0;cursor:pointer;border-radius:50%}
+.gear:active{background:var(--line2)}
+
+/* composer */
+.composer{display:flex;gap:8px;margin-top:11px}
+.composer input{
+  flex:1;min-width:0;font-size:16px;font-family:inherit;color:var(--ink);
+  padding:12px 14px;border:1.5px solid var(--line);border-radius:13px;
+  background:var(--panel);transition:border-color .15s;
+}
+.composer input:focus{outline:none;border-color:var(--accent)}
+.composer input::placeholder{color:var(--faint)}
+.add-btn{
+  flex:none;min-width:60px;height:47px;border:none;border-radius:13px;cursor:pointer;
+  background:var(--accent);color:#fff;font-size:15px;font-weight:700;font-family:inherit;
+}
+.add-btn:active{transform:scale(.96)}
+.add-btn:disabled{opacity:.45}
+
+/* ---------- sections ---------- */
+main{padding:4px 16px calc(env(safe-area-inset-bottom) + 40px)}
+.sec{
+  display:flex;align-items:center;gap:8px;
+  margin:22px 2px 9px;font-size:12px;font-weight:700;
+  color:var(--sub);letter-spacing:.06em;
+}
+.sec .n{
+  font-variant-numeric:tabular-nums;color:var(--faint);font-weight:600;
+}
+.sec .rule{flex:1;height:1px;background:var(--line2)}
+.sec:first-child{margin-top:12px}
+
+/* ---------- cards ---------- */
+.card{
+  display:flex;gap:12px;align-items:flex-start;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:13px 14px;margin:8px 0;box-shadow:var(--shadow);
+  animation:rise .22s ease-out;
+}
+@keyframes rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.card{animation:none}}
+.card .body{flex:1;min-width:0}
+.ttl{font-size:15.5px;line-height:1.42;word-break:break-word;font-weight:500}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;font-size:11.5px;color:var(--sub)}
+.id{
+  font-variant-numeric:tabular-nums;font-weight:700;font-size:11px;
+  color:var(--accent-ink);background:var(--accent-soft);
+  border-radius:5px;padding:2px 6px;margin-right:7px;letter-spacing:.02em;
+}
+.scope{color:var(--sub)}
+.dot{color:var(--line);}
+
+/* check button */
+.check{
+  flex:none;width:26px;height:26px;margin-top:1px;border-radius:50%;
+  border:2px solid var(--line);background:transparent;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:#fff;padding:0;transition:.15s;
+  position:relative;
+}
+/* enlarge tap target without enlarging visual */
+.check::after{content:"";position:absolute;inset:-11px}
+.check:active{transform:scale(.88)}
+.check.on{background:var(--accent);border-color:var(--accent)}
+.done .ttl{color:var(--faint);text-decoration:line-through;text-decoration-color:var(--line)}
+
+/* ---------- queue (受付中) ---------- */
+.card.q{
+  border-style:dashed;border-color:var(--queue-line);
+  background:var(--queue-soft);box-shadow:none;
+}
+.chip{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:10.5px;font-weight:700;letter-spacing:.03em;
+  color:var(--queue);background:var(--panel);
+  border:1px solid var(--queue-line);border-radius:999px;padding:2px 8px;
+}
+.chip.sending{color:var(--sub);border-color:var(--line)}
+.chip.err{color:var(--danger);border-color:var(--danger)}
+.spin{
+  width:9px;height:9px;border:1.6px solid var(--queue-line);
+  border-top-color:var(--queue);border-radius:50%;
+  animation:sp .7s linear infinite;
+}
+@keyframes sp{to{transform:rotate(360deg)}}
+.q-mark{
+  flex:none;width:26px;height:26px;margin-top:1px;border-radius:50%;
+  border:2px dashed var(--queue-line);background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:var(--queue);
+}
+.cancel{
+  flex:none;background:none;border:none;color:var(--faint);
+  font-size:17px;line-height:1;cursor:pointer;padding:6px;margin:-6px -4px -6px 0;border-radius:8px;
+}
+.cancel:active{background:var(--line2);color:var(--danger)}
+.retry{
+  background:none;border:1px solid var(--line);color:var(--sub);
+  font-size:11.5px;font-family:inherit;border-radius:8px;padding:3px 9px;cursor:pointer;
+}
+
+/* ---------- misc ---------- */
+.empty{color:var(--faint);text-align:center;padding:56px 20px;font-size:14.5px;line-height:1.8}
+.empty .big{font-size:30px;display:block;margin-bottom:10px;opacity:.75}
+.foot{display:flex;justify-content:center;padding:20px 0 4px}
+.refresh{
+  background:var(--panel);border:1px solid var(--line);color:var(--sub);
+  font-size:12.5px;font-family:inherit;border-radius:999px;padding:8px 18px;cursor:pointer;
+}
+.refresh:active{background:var(--line2)}
+.skel{height:62px;border-radius:var(--radius);background:var(--line2);margin:8px 0;
+  animation:pulse 1.3s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.55}50%{opacity:.9}}
+.toast{
+  position:fixed;left:50%;transform:translateX(-50%) translateY(12px);
+  bottom:calc(env(safe-area-inset-bottom) + 22px);
+  background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:999px;
+  font-size:13px;font-weight:500;max-width:88%;text-align:center;
+  opacity:0;pointer-events:none;transition:.22s;z-index:50;box-shadow:var(--shadow);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- setup ---------- */
+.setup{padding:6px 18px calc(env(safe-area-inset-bottom) + 40px);max-width:520px;margin:0 auto}
+.setup label{display:block;font-size:12px;font-weight:700;color:var(--sub);margin:16px 0 6px;letter-spacing:.04em}
+.setup input{
+  width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;
+  font-size:16px;font-family:inherit;background:var(--panel);color:var(--ink);
+}
+.setup input:focus{outline:none;border-color:var(--accent)}
+.row{display:flex;gap:9px;margin-top:22px}
+.btn{border:none;border-radius:12px;padding:13px 18px;font-size:15px;font-weight:700;
+  font-family:inherit;background:var(--accent);color:#fff;cursor:pointer}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line)}
+.note{font-size:12px;color:var(--sub);line-height:1.85;margin-top:22px;
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+.note b{color:var(--ink)}
+.alert{font-size:13px;color:var(--danger);background:var(--accent-soft);
+  border:1px solid var(--danger);border-radius:12px;padding:11px 14px;margin-top:14px;line-height:1.6}
+a{color:var(--accent-ink)}
 </style>
 </head>
 <body>
@@ -50,149 +201,466 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const LS = 'wm-config-v1';
-const cfg = JSON.parse(localStorage.getItem(LS) || '{}');
-cfg.owner = cfg.owner || 'gorou56gorou';
-cfg.repo  = cfg.repo  || 'world-milestone';
-cfg.branch= cfg.branch|| 'main';
+"use strict";
 
-const $ = (h)=>{const t=document.createElement('template');t.innerHTML=h.trim();return t.content.firstChild;};
-const app = document.getElementById('app');
-const toastEl = document.getElementById('toast');
-let toastTimer;
-function toast(msg){toastEl.textContent=msg;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('show'),2200);}
+/* ============ config ============ */
+const LS_CFG = 'wm-config-v1';
+const LS_PEND = 'wm-pending-v1';
+const PEND_TTL = 15 * 60 * 1000;   // 楽観項目の保持上限
+const POLL_MS  = 30 * 1000;        // 前面時の自動更新間隔
 
+const cfg = Object.assign(
+  { owner:'gorou56gorou', repo:'world-milestone', branch:'main' },
+  JSON.parse(localStorage.getItem(LS_CFG) || '{}')
+);
+
+const app    = document.getElementById('app');
+const toastEl= document.getElementById('toast');
+
+/* ============ utils ============ */
+const esc = s => String(s).replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const b64enc = s => btoa(unescape(encodeURIComponent(s)));
-const b64dec = s => decodeURIComponent(escape(atob(s.replace(/\n/g,''))));
-const today  = ()=> new Date().toISOString().slice(0,10);
+const b64dec = s => decodeURIComponent(escape(atob(String(s).replace(/\s/g,''))));
+const today  = () => new Date().toISOString().slice(0,10);
 const encPath= p => p.split('/').map(encodeURIComponent).join('/');
+/** 照合用にテキストを正規化（全半角/空白/記号ゆれを吸収） */
+const norm = s => String(s).replace(/^\[INBOX\]\s*/,'')
+  .replace(/\s+/g,'').replace(/[、。,.]/g,'').toLowerCase();
 
-async function gh(path, opts={}){
-  const r = await fetch(`https://api.github.com${path}`, {
-    ...opts,
-    headers:{Authorization:`Bearer ${cfg.token}`, Accept:'application/vnd.github+json', ...(opts.headers||{})}
-  });
-  if(!r.ok){ throw new Error(`${r.status}: ${(await r.text()).slice(0,140)}`); }
-  return r.status===204 ? null : r.json();
+function relTime(iso){
+  const t = new Date(iso).getTime();
+  if(!isFinite(t)) return '';
+  const d = Math.max(0, Date.now() - t), m = Math.floor(d/60000);
+  if(m < 1) return 'たった今';
+  if(m < 60) return m + '分前';
+  const h = Math.floor(m/60);
+  if(h < 24) return h + '時間前';
+  return Math.floor(h/24) + '日前';
 }
 
-// ---- TASKS.md パーサ ----
+let toastTimer;
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>toastEl.classList.remove('show'), 2600);
+}
+
+async function gh(path, opts={}){
+  const r = await fetch('https://api.github.com' + path, Object.assign({}, opts, {
+    headers: Object.assign({
+      Authorization: 'Bearer ' + cfg.token,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    }, opts.headers || {})
+  }));
+  if(!r.ok){
+    const body = await r.text().catch(()=> '');
+    const e = new Error(r.status + ': ' + body.slice(0,140));
+    e.status = r.status;
+    throw e;
+  }
+  return r.status === 204 ? null : r.json();
+}
+
+/* ============ pending store（空白期間の橋渡し） ============ */
+function loadPending(){
+  let list;
+  try{ list = JSON.parse(localStorage.getItem(LS_PEND) || '[]'); }catch(_){ list = []; }
+  if(!Array.isArray(list)) list = [];
+  const alive = list.filter(p => Date.now() - (p.createdAt||0) < PEND_TTL);
+  if(alive.length !== list.length) savePending(alive);
+  return alive;
+}
+function savePending(list){
+  try{ localStorage.setItem(LS_PEND, JSON.stringify(list)); }catch(_){}
+}
+function addPending(p){ const l = loadPending(); l.push(p); savePending(l); }
+function updatePending(localId, patch){
+  const l = loadPending().map(p => p.localId === localId ? Object.assign(p, patch) : p);
+  savePending(l);
+}
+function dropPending(localId){
+  savePending(loadPending().filter(p => p.localId !== localId));
+}
+
+/* ============ TASKS.md パーサ ============ */
+const SECTIONS = [
+  ['now',    '🔥 いま',   /Now/],
+  ['next',   '⏭️ つぎ',   /Next/],
+  ['blocked','🚧 詰まり', /Blocked/],
+  ['later',  '🗓️ 寝かせ', /Later/],
+  ['done',   '✅ 完了',   /Done/],
+];
+
 function parseTasks(md){
-  const groups = {now:[],next:[],blocked:[],later:[],done:[]};
+  const g = { now:[], next:[], blocked:[], later:[], done:[] };
   let cur = null;
   for(const line of md.split('\n')){
     const h = line.match(/^##\s+(.+)/);
     if(h){
-      const t=h[1];
-      cur = /Now/.test(t)?'now': /Next/.test(t)?'next': /Blocked/.test(t)?'blocked': /Later/.test(t)?'later': /Done/.test(t)?'done': null;
+      cur = null;
+      for(const [key,,re] of SECTIONS){ if(re.test(h[1])){ cur = key; break; } }
       continue;
     }
     const m = line.match(/^-\s+\*\*#(\d+)\*\*\s+(.+?)\s+·\s+`(.+?)`\s+·\s+\[[^\]]+\]\(([^)]+)\)/);
-    if(m && cur){ groups[cur].push({id:m[1], title:m[2].trim(), scope:m[3], path:decodeURI(m[4])}); }
-  }
-  return groups;
-}
-
-const SEC = [['now','🔥 いま (着手中)'],['next','⏭️ つぎ (待機)'],['blocked','🚧 詰まり'],['later','🗓️ 寝かせ'],['done','✅ 完了']];
-
-async function load(){
-  render(`<header><div class="topbar"><h1>🍜 わんこそば</h1></div><div class="meta">読み込み中…</div></header>`);
-  let groups, genLine='';
-  try{
-    const data = await gh(`/repos/${cfg.owner}/${cfg.repo}/contents/TASKS.md?ref=${cfg.branch}`);
-    const md = b64dec(data.content);
-    genLine = (md.match(/未完了[^\n]*/)||[''])[0];
-    groups = parseTasks(md);
-  }catch(e){
-    if(String(e).startsWith('401')||String(e).startsWith('404')){ return setup(`認証に失敗しました (${e.message}). トークンを確認してください。`); }
-    return render(`<header><h1>🍜 わんこそば</h1></header><main><div class="empty">読み込みエラー<br>${e.message}</div><div style="text-align:center"><button class="btn ghost" onclick="setup()">設定</button></div></main>`);
-  }
-  let html = `<header>
-    <div class="topbar"><h1>🍜 わんこそば</h1><button class="gear" onclick="setup()">⚙️</button></div>
-    <div class="meta">${genLine||''}　<a href="#" onclick="load();return false">↻更新</a></div>
-    <div class="add"><input id="cap" placeholder="やること（雑でOK）" enterkeyhint="send"><button class="btn" onclick="addTask()">追加</button></div>
-  </header><main>`;
-  for(const [key,label] of SEC){
-    const items = groups[key];
-    if(!items.length) continue;
-    html += `<div class="sec">${label}　${items.length}</div>`;
-    for(const t of items){
-      const done = key==='done';
-      html += `<div class="card ${done?'done':''}">
-        <button class="check ${done?'is-done':''}" ${done?'disabled':''} onclick="complete('${t.id}', this)" data-path="${encodeURIComponent(t.path)}">${done?'✓':''}</button>
-        <div class="body"><div class="ttl"><span class="id">#${t.id}</span>${escapeHtml(t.title)}</div>
-        <div class="scope">${escapeHtml(t.scope)}</div></div>
-      </div>`;
+    if(m && cur){
+      g[cur].push({ id:m[1], title:m[2].trim(), scope:m[3], path:decodeURI(m[4]) });
     }
   }
-  if(!SEC.some(([k])=>groups[k].length)) html += `<div class="empty">タスクはありません 🎉</div>`;
-  html += `</main>`;
-  render(html);
-  const cap = document.getElementById('cap');
-  cap && cap.addEventListener('keydown', e=>{ if(e.key==='Enter') addTask(); });
+  return g;
 }
 
-function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+/* ============ 状態 ============ */
+let state = { groups:null, queue:[], countLine:'', loading:false };
+let pollTimer = null;
+
+/* ============ 読み込み ============ */
+async function load(opts={}){
+  if(!cfg.token) return setup();
+  if(state.loading) return;
+  state.loading = true;
+  if(!opts.silent && !state.groups) renderSkeleton();
+
+  try{
+    const [fileRes, issuesRes] = await Promise.all([
+      gh(`/repos/${cfg.owner}/${cfg.repo}/contents/TASKS.md?ref=${encodeURIComponent(cfg.branch)}`),
+      gh(`/repos/${cfg.owner}/${cfg.repo}/issues?labels=inbox&state=open&per_page=50&sort=created&direction=desc`)
+        .catch(()=>[])   // Issue取得に失敗してもタスク一覧は出す
+    ]);
+
+    const md = b64dec(fileRes.content);
+    state.groups = parseTasks(md);
+    state.countLine = (md.match(/未完了[^\n]*/) || [''])[0];
+
+    const issues = (Array.isArray(issuesRes) ? issuesRes : [])
+      .filter(i => !i.pull_request)
+      .map(i => ({
+        kind:'issue', number:i.number,
+        title:String(i.title||'').replace(/^\[INBOX\]\s*/, '').trim() || '(無題)',
+        createdAt:i.created_at
+      }));
+
+    // サーバ側に現れた楽観項目は破棄（二重表示を防ぐ）
+    const placed = [];
+    for(const k of ['now','next','blocked','later','done']) for(const t of state.groups[k]) placed.push(norm(t.title));
+    const issueKeys = issues.map(i => norm(i.title));
+    for(const p of loadPending()){
+      if(p.status === 'sending' || p.status === 'error') continue;
+      const k = norm(p.text);
+      if(issueKeys.includes(k) || placed.includes(k)) dropPending(p.localId);
+    }
+
+    const pend = loadPending().map(p => ({
+      kind:'pending', localId:p.localId, title:p.text,
+      createdAt:new Date(p.createdAt).toISOString(), status:p.status, error:p.error
+    }));
+
+    state.queue = pend.concat(issues);
+    render();
+  }catch(e){
+    state.loading = false;
+    if(e.status === 401 || e.status === 404){
+      return setup(e.status === 401
+        ? '認証に失敗しました。トークンが失効しているか、権限が足りません。'
+        : 'リポジトリまたは TASKS.md が見つかりません。設定を確認してください。');
+    }
+    if(state.groups){ toast('更新できませんでした'); render(); }
+    else renderError(e.message);
+    return;
+  }
+  state.loading = false;
+}
+
+/* ============ 描画 ============ */
+function headerHtml(){
+  const q = state.queue.length;
+  return `<header id="hd">
+    <div class="bar">
+      <h1><span class="bowl">🍜</span>わんこそば</h1>
+      <button class="gear" onclick="setup()" aria-label="設定">⚙︎</button>
+    </div>
+    <div class="bar" style="margin-top:2px">
+      <div class="count">${state.countLine ? esc(state.countLine).replace(/\*\*/g,'') : ''}${
+        q ? ` <span style="color:var(--queue)">・受付中 ${q}</span>` : ''}</div>
+    </div>
+    <div class="composer">
+      <input id="cap" placeholder="やること（雑でOK）" enterkeyhint="send"
+             autocomplete="off" autocapitalize="off">
+      <button class="add-btn" id="addbtn" onclick="addTask()">追加</button>
+    </div>
+  </header>`;
+}
+
+function queueCardHtml(item){
+  if(item.kind === 'pending'){
+    const err = item.status === 'error';
+    // 'queued' = 送信済みだがサーバ側にまだ現れていない（トリアージ直後の空白期間）
+    const sent = item.status === 'queued';
+    let chip;
+    if(err){
+      chip = `<span class="chip err">送信失敗</span>
+              <button class="retry" onclick="retryPending('${esc(item.localId)}')">再試行</button>`;
+    }else if(sent){
+      chip = `<span class="chip">分類待ち</span>
+              <span class="dot">·</span><span>${esc(relTime(item.createdAt))}</span>`;
+    }else{
+      chip = `<span class="chip sending"><span class="spin"></span>送信中</span>`;
+    }
+    return `<div class="card q">
+      <div class="q-mark">${err ? '!' : '·'}</div>
+      <div class="body">
+        <div class="ttl">${esc(item.title)}</div>
+        <div class="meta">${chip}${err && item.error ? `<span class="dot">·</span><span>${esc(item.error)}</span>` : ''}</div>
+      </div>
+      ${err ? `<button class="cancel" onclick="dropPendingUI('${esc(item.localId)}')" aria-label="削除">✕</button>` : ''}
+    </div>`;
+  }
+  return `<div class="card q">
+    <div class="q-mark">·</div>
+    <div class="body">
+      <div class="ttl">${esc(item.title)}</div>
+      <div class="meta">
+        <span class="chip">分類待ち</span>
+        <span class="dot">·</span><span>${esc(relTime(item.createdAt))}</span>
+      </div>
+    </div>
+    <button class="cancel" onclick="cancelQueued(${item.number})" aria-label="取消">✕</button>
+  </div>`;
+}
+
+function taskCardHtml(t, isDone){
+  return `<div class="card${isDone ? ' done' : ''}">
+    <button class="check${isDone ? ' on' : ''}" ${isDone ? 'disabled' : ''}
+            onclick="complete('${esc(t.id)}', this)"
+            data-path="${encodeURIComponent(t.path)}"
+            aria-label="${isDone ? '完了済み' : '完了にする'}">${isDone ? '✓' : ''}</button>
+    <div class="body">
+      <div class="ttl"><span class="id">#${esc(t.id)}</span>${esc(t.title)}</div>
+      <div class="meta"><span class="scope">${esc(t.scope)}</span></div>
+    </div>
+  </div>`;
+}
+
+function render(){
+  let html = headerHtml() + '<main>';
+  let any = false;
+
+  if(state.queue.length){
+    any = true;
+    html += `<div class="sec" style="color:var(--queue)">📥 受付中（分類待ち）
+      <span class="n">${state.queue.length}</span><span class="rule"></span></div>`;
+    html += state.queue.map(queueCardHtml).join('');
+  }
+
+  for(const [key, label] of SECTIONS){
+    const items = state.groups ? state.groups[key] : [];
+    if(!items || !items.length) continue;
+    any = true;
+    html += `<div class="sec">${label}<span class="n">${items.length}</span><span class="rule"></span></div>`;
+    html += items.map(t => taskCardHtml(t, key === 'done')).join('');
+  }
+
+  if(!any){
+    html += `<div class="empty"><span class="big">🍃</span>タスクはありません<br>下の欄から放り込んでください</div>`;
+  }
+  html += `<div class="foot"><button class="refresh" onclick="load()">↻ 更新</button></div>`;
+  html += '</main>';
+  paint(html);
+}
+
+function renderSkeleton(){
+  paint(headerHtml() + '<main>' +
+    '<div class="sec">読み込み中<span class="rule"></span></div>' +
+    '<div class="skel"></div><div class="skel"></div><div class="skel"></div></main>');
+}
+
+function renderError(msg){
+  paint(headerHtml() + `<main><div class="empty"><span class="big">⚠️</span>
+    読み込みに失敗しました<br><span style="font-size:12.5px">${esc(msg)}</span></div>
+    <div class="foot"><button class="refresh" onclick="load()">↻ 再試行</button></div></main>`);
+}
+
+function paint(html){
+  const cap = document.getElementById('cap');
+  const keep = cap ? { v:cap.value, f:document.activeElement === cap } : null;
+  const y = window.scrollY;
+  app.innerHTML = html;
+  const cap2 = document.getElementById('cap');
+  if(cap2){
+    if(keep){ cap2.value = keep.v; if(keep.f){ cap2.focus(); } }
+    cap2.addEventListener('keydown', e => { if(e.key === 'Enter') addTask(); });
+  }
+  window.scrollTo(0, y);
+  const hd = document.getElementById('hd');
+  if(hd) hd.classList.toggle('stuck', y > 4);
+}
+
+window.addEventListener('scroll', () => {
+  const hd = document.getElementById('hd');
+  if(hd) hd.classList.toggle('stuck', window.scrollY > 4);
+}, { passive:true });
+
+/* ============ 追加（楽観的） ============ */
+function makeLocalId(){
+  return 'p' + Date.now().toString(36) + Math.floor(Math.random()*1e6).toString(36);
+}
 
 async function addTask(){
   const inp = document.getElementById('cap');
-  const text = (inp.value||'').trim();
+  if(!inp) return;
+  const text = (inp.value || '').trim();
   if(!text) return;
-  inp.disabled = true;
-  try{
-    await gh(`/repos/${cfg.owner}/${cfg.repo}/issues`, {method:'POST',
-      body: JSON.stringify({title:`[INBOX] ${text}`, labels:['inbox']})});
-    inp.value=''; toast('受信箱に追加しました（次回トリアージで配置）');
-  }catch(e){ toast('追加失敗: '+e.message); }
-  inp.disabled=false; inp.focus();
+
+  const localId = makeLocalId();
+  addPending({ localId, text, createdAt: Date.now(), status:'sending' });
+  inp.value = '';
+  state.queue = [{ kind:'pending', localId, title:text,
+                   createdAt:new Date().toISOString(), status:'sending' }].concat(state.queue);
+  render();
+
+  await sendPending(localId, text);
 }
 
+async function sendPending(localId, text){
+  try{
+    const issue = await gh(`/repos/${cfg.owner}/${cfg.repo}/issues`, {
+      method:'POST',
+      body: JSON.stringify({ title:`[INBOX] ${text}`, labels:['inbox'] })
+    });
+    updatePending(localId, { status:'queued', issueNumber: issue && issue.number });
+    const i = state.queue.findIndex(q => q.localId === localId);
+    if(i >= 0){
+      state.queue[i] = { kind:'issue', number: issue.number, title:text,
+                         createdAt: issue.created_at || new Date().toISOString() };
+      render();
+    }
+    toast('受信箱に追加しました');
+    setTimeout(()=>load({silent:true}), 20000);   // トリアージ完了ごろに拾い直す
+  }catch(e){
+    updatePending(localId, { status:'error', error: e.status ? ('HTTP ' + e.status) : '通信エラー' });
+    const i = state.queue.findIndex(q => q.localId === localId);
+    if(i >= 0){
+      state.queue[i].status = 'error';
+      state.queue[i].error  = e.status ? ('HTTP ' + e.status) : '通信エラー';
+      render();
+    }
+    toast('追加に失敗しました');
+  }
+}
+
+function retryPending(localId){
+  const p = loadPending().find(x => x.localId === localId);
+  if(!p) return;
+  updatePending(localId, { status:'sending', error:null });
+  const i = state.queue.findIndex(q => q.localId === localId);
+  if(i >= 0){ state.queue[i].status = 'sending'; state.queue[i].error = null; render(); }
+  sendPending(localId, p.text);
+}
+
+function dropPendingUI(localId){
+  dropPending(localId);
+  state.queue = state.queue.filter(q => q.localId !== localId);
+  render();
+}
+
+/* ============ 受付中の取消 ============ */
+async function cancelQueued(number){
+  if(!confirm('この受付中タスクを取り消しますか？')) return;
+  try{
+    await gh(`/repos/${cfg.owner}/${cfg.repo}/issues/${number}`, {
+      method:'PATCH', body: JSON.stringify({ state:'closed' })
+    });
+    state.queue = state.queue.filter(q => !(q.kind === 'issue' && q.number === number));
+    render();
+    toast('取り消しました');
+  }catch(e){ toast('取消に失敗: ' + (e.status || '')); }
+}
+
+/* ============ 完了 ============ */
 async function complete(id, btn){
   const path = decodeURIComponent(btn.dataset.path);
-  btn.disabled=true; btn.classList.add('is-done'); btn.textContent='✓';
+  btn.disabled = true;
+  btn.classList.add('on');
+  btn.textContent = '✓';
+  const card = btn.closest('.card');
+  if(card) card.classList.add('done');
   try{
     const enc = encPath(path);
-    const f = await gh(`/repos/${cfg.owner}/${cfg.repo}/contents/${enc}?ref=${cfg.branch}`);
+    const f = await gh(`/repos/${cfg.owner}/${cfg.repo}/contents/${enc}?ref=${encodeURIComponent(cfg.branch)}`);
     let c = b64dec(f.content);
-    c = /^status:.*$/m.test(c) ? c.replace(/^status:.*$/m,'status: completed') : c.replace(/^---\n/,'---\nstatus: completed\n');
-    c = /^completed:.*$/m.test(c) ? c.replace(/^completed:.*$/m,`completed: ${today()}`) : c.replace(/^---\n/,`---\ncompleted: ${today()}\n`);
-    await gh(`/repos/${cfg.owner}/${cfg.repo}/contents/${enc}`, {method:'PUT',
-      body: JSON.stringify({message:`done: #${id} (mobile)`, content:b64enc(c), sha:f.sha, branch:cfg.branch})});
+    c = /^status:.*$/m.test(c)
+      ? c.replace(/^status:.*$/m, 'status: completed')
+      : c.replace(/^---\n/, '---\nstatus: completed\n');
+    c = /^completed:.*$/m.test(c)
+      ? c.replace(/^completed:.*$/m, `completed: ${today()}`)
+      : c.replace(/^---\n/, `---\ncompleted: ${today()}\n`);
+    await gh(`/repos/${cfg.owner}/${cfg.repo}/contents/${enc}`, {
+      method:'PUT',
+      body: JSON.stringify({ message:`done: #${id} (mobile)`, content:b64enc(c),
+                             sha:f.sha, branch:cfg.branch })
+    });
     toast(`#${id} 完了。知識昇格をクラウドで実行中…`);
-    setTimeout(load, 4000);
-  }catch(e){ toast('完了失敗: '+e.message); btn.disabled=false; }
+    setTimeout(()=>load({silent:true}), 6000);
+  }catch(e){
+    toast('完了に失敗: ' + (e.status || e.message));
+    btn.disabled = false; btn.classList.remove('on'); btn.textContent = '';
+    if(card) card.classList.remove('done');
+  }
 }
 
+/* ============ 自動更新 ============ */
+function startPoll(){
+  stopPoll();
+  pollTimer = setInterval(()=>{ if(!document.hidden) load({silent:true}); }, POLL_MS);
+}
+function stopPoll(){ if(pollTimer){ clearInterval(pollTimer); pollTimer = null; } }
+
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){ stopPoll(); }
+  else if(cfg.token){ load({silent:true}); startPoll(); }
+});
+
+/* ============ 設定 ============ */
 function setup(msg){
-  render(`<header><h1>🍜 わんこそば 設定</h1></header>
+  stopPoll();
+  paint(`<header><div class="bar"><h1><span class="bowl">🍜</span>設定</h1></div></header>
   <div class="setup">
-    ${msg?`<div class="note" style="color:#b91c1c">${msg}</div>`:''}
-    <label>GitHub トークン (Fine-grained PAT)</label>
-    <input id="s_token" type="password" placeholder="github_pat_..." value="${cfg.token||''}">
-    <label>オーナー</label><input id="s_owner" value="${cfg.owner}">
-    <label>リポジトリ</label><input id="s_repo" value="${cfg.repo}">
-    <label>ブランチ</label><input id="s_branch" value="${cfg.branch}">
-    <div style="margin-top:16px;display:flex;gap:8px">
+    ${msg ? `<div class="alert">${esc(msg)}</div>` : ''}
+    <label>GitHub トークン（Fine-grained PAT）</label>
+    <input id="s_token" type="password" placeholder="github_pat_…" value="${esc(cfg.token||'')}"
+           autocomplete="off" autocapitalize="off" spellcheck="false">
+    <label>オーナー</label><input id="s_owner" value="${esc(cfg.owner)}" autocapitalize="off">
+    <label>リポジトリ</label><input id="s_repo" value="${esc(cfg.repo)}" autocapitalize="off">
+    <label>ブランチ</label><input id="s_branch" value="${esc(cfg.branch)}" autocapitalize="off">
+    <div class="row">
       <button class="btn" onclick="saveCfg()">保存して開く</button>
-      ${cfg.token?'<button class="btn ghost" onclick="load()">戻る</button>':''}
+      ${cfg.token ? '<button class="btn ghost" onclick="load()">戻る</button>' : ''}
     </div>
     <div class="note">
       トークンは<b>この端末内だけ</b>に保存されます（どこにも送信しません）。<br>
-      発行: GitHub → Settings → Developer settings → <b>Fine-grained tokens</b> → このリポのみ許可、権限は <b>Contents: Read/Write</b> と <b>Issues: Read/Write</b>。期限付き推奨。いつでも失効できます。
+      発行: GitHub → Settings → Developer settings → <b>Fine-grained tokens</b> →
+      このリポジトリのみ許可、権限は <b>Contents: Read and write</b> と
+      <b>Issues: Read and write</b>。期限付き推奨・いつでも失効できます。
     </div>
   </div>`);
 }
-function saveCfg(){
-  cfg.token = document.getElementById('s_token').value.trim();
-  cfg.owner = document.getElementById('s_owner').value.trim();
-  cfg.repo  = document.getElementById('s_repo').value.trim();
-  cfg.branch= document.getElementById('s_branch').value.trim()||'main';
-  localStorage.setItem(LS, JSON.stringify(cfg));
-  load();
-}
-function render(h){app.innerHTML=h;}
 
-cfg.token ? load() : setup();
+function saveCfg(){
+  const g = id => (document.getElementById(id).value || '').trim();
+  cfg.token  = g('s_token');
+  cfg.owner  = g('s_owner');
+  cfg.repo   = g('s_repo');
+  cfg.branch = g('s_branch') || 'main';
+  localStorage.setItem(LS_CFG, JSON.stringify(cfg));
+  state.groups = null;
+  load();
+  startPoll();
+}
+
+/* ============ 起動 ============ */
+if(cfg.token){ load(); startPoll(); } else { setup(); }
 </script>
 </body>
 </html>

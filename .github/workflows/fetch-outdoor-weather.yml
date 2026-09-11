@@ -5,6 +5,11 @@ name: fetch-outdoor-weather
 # 実行環境のネットワーク制限で直接取得できないため、Actions ランナー経由で取得する。
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - claude/temperature-humidity-analysis-nyh22h
+    paths:
+      - .github/workflows/fetch-outdoor-weather.yml
 
 permissions:
   contents: write

@@ -1,0 +1,628 @@
+<title>第二収蔵庫 温湿度モニタリング</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f6f5f1;
+    --surface: #fcfcfb;
+    --ink: #1c1b18;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --accent: #2b4a70;
+    --rule: #e1e0d9;
+    --grid: #e7e6df;
+    --axis: #c3c2b7;
+    --series: #2a78d6;
+    --outdoor: #898781;
+    --bad: #d03b3b;
+    --band: rgba(12, 163, 12, 0.07);
+    --band-edge: rgba(12, 131, 12, 0.35);
+    --pill-high-bg: rgba(208, 59, 59, 0.12);
+    --pill-high-ink: #a32424;
+    --pill-mid-bg: rgba(201, 133, 0, 0.14);
+    --pill-mid-ink: #8a5b00;
+    --pill-low-bg: rgba(137, 135, 129, 0.15);
+    --pill-low-ink: #52514e;
+    --pill-ok-bg: rgba(12, 163, 12, 0.12);
+    --pill-ok-ink: #006300;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #111110;
+      --surface: #1a1a19;
+      --ink: #f4f3ef;
+      --ink-2: #c3c2b7;
+      --muted: #898781;
+      --accent: #9db8d8;
+      --rule: #2c2c2a;
+      --grid: #262624;
+      --axis: #383835;
+      --series: #3987e5;
+      --outdoor: #898781;
+      --bad: #e05252;
+      --band: rgba(12, 163, 12, 0.10);
+      --band-edge: rgba(70, 180, 70, 0.40);
+      --pill-high-bg: rgba(224, 82, 82, 0.18);
+      --pill-high-ink: #f2a0a0;
+      --pill-mid-bg: rgba(250, 178, 25, 0.16);
+      --pill-mid-ink: #f0c46a;
+      --pill-low-bg: rgba(137, 135, 129, 0.22);
+      --pill-low-ink: #c3c2b7;
+      --pill-ok-bg: rgba(12, 163, 12, 0.18);
+      --pill-ok-ink: #7fd67f;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #111110;
+    --surface: #1a1a19;
+    --ink: #f4f3ef;
+    --ink-2: #c3c2b7;
+    --muted: #898781;
+    --accent: #9db8d8;
+    --rule: #2c2c2a;
+    --grid: #262624;
+    --axis: #383835;
+    --series: #3987e5;
+    --outdoor: #898781;
+    --bad: #e05252;
+    --band: rgba(12, 163, 12, 0.10);
+    --band-edge: rgba(70, 180, 70, 0.40);
+    --pill-high-bg: rgba(224, 82, 82, 0.18);
+    --pill-high-ink: #f2a0a0;
+    --pill-mid-bg: rgba(250, 178, 25, 0.16);
+    --pill-mid-ink: #f0c46a;
+    --pill-low-bg: rgba(137, 135, 129, 0.22);
+    --pill-low-ink: #c3c2b7;
+    --pill-ok-bg: rgba(12, 163, 12, 0.18);
+    --pill-ok-ink: #7fd67f;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.75;
+    padding: 0 20px;
+    padding-block: 0 48px;
+  }
+  .wrap { max-width: 1020px; margin: 0 auto; }
+
+  header.masthead { padding-block: 40px 20px; border-bottom: 2px solid var(--accent); }
+  .eyebrow {
+    font-size: 12px; letter-spacing: 0.18em; color: var(--ink-2);
+    text-transform: none; margin: 0 0 6px;
+  }
+  h1 {
+    font-family: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+    font-weight: 700; font-size: clamp(24px, 4.5vw, 34px);
+    margin: 0 0 10px; letter-spacing: 0.04em; text-wrap: balance; color: var(--ink);
+  }
+  .meta-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .chip {
+    font-size: 13px; padding: 3px 12px; border: 1px solid var(--rule);
+    border-radius: 999px; background: var(--surface); color: var(--ink-2);
+  }
+  .chip strong { color: var(--ink); font-weight: 600; }
+
+  nav.jump { display: flex; flex-wrap: wrap; gap: 6px; padding-block: 14px; }
+  nav.jump a {
+    font-size: 13px; color: var(--accent); text-decoration: none;
+    border: 1px solid var(--rule); border-radius: 999px; padding: 2px 12px;
+    background: var(--surface);
+  }
+  nav.jump a:hover { border-color: var(--accent); }
+
+  h2 {
+    font-family: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+    font-size: 21px; font-weight: 700; letter-spacing: 0.03em;
+    margin: 40px 0 4px; padding-top: 8px; color: var(--ink);
+  }
+  h3 { font-size: 14px; font-weight: 600; margin: 20px 0 8px; color: var(--ink-2); }
+  h3 small { font-weight: 400; color: var(--muted); margin-left: 10px; font-size: 12px; }
+
+  .lead-note {
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 8px;
+    padding: 14px 20px; margin-top: 20px; font-size: 14px;
+  }
+  .lead-note ul { margin: 6px 0 2px; padding-left: 20px; }
+  .lead-note li { margin-block: 6px; }
+
+  .table-scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; background: var(--surface); }
+  th, td { border: 1px solid var(--rule); padding: 6px 10px; text-align: left; }
+  thead th { background: color-mix(in srgb, var(--accent) 7%, var(--surface)); font-weight: 600; white-space: nowrap; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tbody th[scope="row"] { font-weight: 600; white-space: nowrap; }
+  tbody th a { color: var(--accent); text-decoration: none; }
+  tbody th a:hover { text-decoration: underline; }
+
+  .pill {
+    display: inline-block; min-width: 52px; text-align: center;
+    border-radius: 999px; padding: 0 8px; font-size: 12.5px; font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .sev-high { background: var(--pill-high-bg); color: var(--pill-high-ink); }
+  .sev-mid  { background: var(--pill-mid-bg);  color: var(--pill-mid-ink); }
+  .sev-low  { background: var(--pill-low-bg);  color: var(--pill-low-ink); }
+  .sev-ok   { background: var(--pill-ok-bg);   color: var(--pill-ok-ink); }
+
+  section.room { border-top: 1px solid var(--rule); margin-top: 8px; }
+  .room-meta { display: flex; flex-wrap: wrap; gap: 6px 24px; font-size: 13.5px; color: var(--ink-2); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; font-size: 12.5px; color: var(--ink-2); }
+  .key { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch.line { width: 18px; height: 0; border-top: 2.5px solid var(--series); display: inline-block; }
+  .swatch.line.outdoor { border-top: 2px solid var(--outdoor); }
+  .swatch.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); display: inline-block; }
+  .swatch.band-chip { width: 18px; height: 11px; background: var(--band); border: 1px dashed var(--band-edge); display: inline-block; }
+
+  .chart-box {
+    position: relative; height: 250px; background: var(--surface);
+    border: 1px solid var(--rule); border-radius: 6px; padding: 10px 12px 6px;
+  }
+  @media (max-width: 560px) { .chart-box { height: 215px; } }
+
+  details.episodes { margin-top: 16px; }
+  details.episodes summary {
+    cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent);
+    padding: 6px 0;
+  }
+  details.episodes .count {
+    background: var(--pill-high-bg); color: var(--pill-high-ink);
+    border-radius: 999px; padding: 0 10px; font-size: 12.5px; margin-inline: 4px;
+  }
+  .dev { white-space: nowrap; font-weight: 600; }
+  .dev.high { color: var(--pill-high-ink); }
+  .dev.low  { color: var(--accent); }
+  .note { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+  footer.src {
+    margin-top: 48px; border-top: 1px solid var(--rule); padding-top: 14px;
+    font-size: 12.5px; color: var(--muted);
+  }
+  footer.src p { margin: 4px 0; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Shippori+Mincho:wght@600;700&display=swap">
+
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">しばたの郷土館</p>
+    <h1>第二収蔵庫 温湿度モニタリング</h1>
+    <div class="meta-chips">
+      <span class="chip">測定期間 <strong>2026年7月15日 〜 8月8日</strong></span>
+      <span class="chip">記録間隔 <strong>2時間</strong></span>
+      <span class="chip">管理基準 温度 <strong>25℃±5℃</strong>(20〜30℃)</span>
+      <span class="chip">管理基準 湿度 <strong>55%±5%</strong>(50〜60%)</span>
+    </div>
+  </header>
+
+  <nav class="jump" aria-label="部屋へ移動"><a href="#hall">①ホール</a><a href="#room1">②第1教室（西）</a><a href="#room2">③第2教室（中央）</a><a href="#room3">④第3教室（東）</a><a href="#north">⑤北側保管室</a><a href="#outdoor">外気</a></nav>
+
+  <section id="summary">
+    <h2>部屋別サマリー</h2>
+    <div class="table-scroll"><table>
+      <thead>
+        <tr>
+          <th rowspan="2">測定場所</th>
+          <th colspan="3">温度(℃)</th>
+          <th colspan="3">湿度(%)</th>
+        </tr>
+        <tr>
+          <th>最低〜最高</th><th>平均</th><th>逸脱率</th>
+          <th>最低〜最高</th><th>平均</th><th>逸脱率</th>
+        </tr>
+      </thead>
+      <tbody><tr><th scope="row"><a href="#hall">①ホール</a></th><td class="num">20.2 〜 33.0</td><td class="num">25.2</td><td class="num"><span class="pill sev-low">4.2%</span></td><td class="num">40.4 〜 79.5</td><td class="num">61.6</td><td class="num"><span class="pill sev-high">65.3%</span></td></tr>
+<tr><th scope="row"><a href="#room1">②第1教室（西）</a></th><td class="num">22.1 〜 31.0</td><td class="num">24.8</td><td class="num"><span class="pill sev-low">0.7%</span></td><td class="num">40.1 〜 78.1</td><td class="num">65.0</td><td class="num"><span class="pill sev-high">82.6%</span></td></tr>
+<tr><th scope="row"><a href="#room2">③第2教室（中央）</a></th><td class="num">23.4 〜 31.6</td><td class="num">26.0</td><td class="num"><span class="pill sev-low">2.8%</span></td><td class="num">46.2 〜 74.5</td><td class="num">60.9</td><td class="num"><span class="pill sev-high">58.3%</span></td></tr>
+<tr><th scope="row"><a href="#room3">④第3教室（東）</a></th><td class="num">22.9 〜 29.9</td><td class="num">24.9</td><td class="num"><span class="pill sev-ok">0.0%</span></td><td class="num">45.9 〜 77.3</td><td class="num">64.7</td><td class="num"><span class="pill sev-high">71.5%</span></td></tr>
+<tr><th scope="row"><a href="#north">⑤北側保管室</a></th><td class="num">21.6 〜 30.9</td><td class="num">25.6</td><td class="num"><span class="pill sev-low">3.8%</span></td><td class="num">56.5 〜 90.4</td><td class="num">75.1</td><td class="num"><span class="pill sev-high">99.7%</span></td></tr></tbody>
+    </table></div>
+    <div class="lead-note">
+      <strong>所見</strong>
+      <ul>
+      <li><strong>湿度の上限超過が最大の課題</strong>です。⑤北側保管室は測定時間の 99.7% で湿度が管理範囲(50〜60%)を外れ、最高 90.4%(7/29 11:55)に達しました。カビ・虫害リスクが高い状態です。</li>
+      <li><strong>温度は概ね管理範囲内</strong>です。逸脱率が最も高い①ホールでも 4.2% で、最高 33.0℃(7/16 15:58)でした。夏季日中の上限(30℃)超過が中心です。</li>
+      <li><strong>乾燥側の逸脱</strong>も発生しています。特に①ホールでは湿度50%未満の時間帯が計84時間(8回)あり、加湿・除湿双方の調整が必要です。</li>
+      <li><strong>外気の影響</strong>: 期間中の外気は平均湿度 88%(最高 100%)と多湿で、外気温 17.9〜34.1℃ の日変動が室内の温湿度変動と連動する傾向が見られます。開口部の管理と除湿運転の強化が有効と考えられます。</li>
+    </ul>
+    </div>
+  </section>
+
+  
+    <section class="room" id="hall">
+      <h2>①ホール</h2>
+      <div class="room-meta">
+        <span>温度 20.2〜33.0℃(平均 25.2℃)・逸脱 <span class="pill sev-low">4.2%</span></span>
+        <span>湿度 40.4〜79.5%(平均 61.6%)・逸脱 <span class="pill sev-high">65.3%</span></span>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span class="key"><i class="swatch line indoor"></i>室内</span>
+        <span class="key"><i class="swatch line outdoor"></i>外気(参考)</span>
+        <span class="key"><i class="swatch dot dev-dot"></i>基準逸脱</span>
+        <span class="key"><i class="swatch band-chip"></i>目標範囲</span>
+      </div>
+      <h3>温度(℃)<small>目標 25℃±5℃</small></h3>
+      <div class="chart-box"><canvas id="c-hall-t" role="img" aria-label="①ホールの温度推移グラフ"></canvas></div>
+      <h3>湿度(%)<small>目標 55%±5%</small></h3>
+      <div class="chart-box"><canvas id="c-hall-h" role="img" aria-label="①ホールの湿度推移グラフ"></canvas></div>
+      <details class="episodes">
+        <summary>基準逸脱の時間帯一覧 <span class="count">22件</span>(温度 計約24時間 / 湿度 計約376時間)</summary>
+        <div class="table-scroll"><table>
+          <thead><tr><th>種別</th><th>開始</th><th>終了</th><th>継続</th><th>ピーク値</th></tr></thead>
+          <tbody><tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/15 15:58</td><td>7/15 17:58</td><td class="num">約2時間</td><td class="num">41.3%</td></tr>
+<tr><td><span class="dev high">温度 ▲ 上限超過</span></td><td>7/15 17:58</td><td>7/15 21:58</td><td class="num">約4時間</td><td class="num">30.9℃</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/15 19:58</td><td>7/17 09:58</td><td class="num">約38時間</td><td class="num">72.7%</td></tr>
+<tr><td><span class="dev high">温度 ▲ 上限超過</span></td><td>7/16 13:58</td><td>7/16 23:58</td><td class="num">約10時間</td><td class="num">33.0℃</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/17 11:58</td><td>7/17 13:58</td><td class="num">約2時間</td><td class="num">48.8%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/17 17:58</td><td>7/19 15:58</td><td class="num">約46時間</td><td class="num">75.3%</td></tr>
+<tr><td><span class="dev high">温度 ▲ 上限超過</span></td><td>7/19 17:58</td><td>7/19 19:58</td><td class="num">約2時間</td><td class="num">30.2℃</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/20 01:58</td><td>7/20 13:58</td><td class="num">約12時間</td><td class="num">68.0%</td></tr>
+<tr><td><span class="dev high">温度 ▲ 上限超過</span></td><td>7/20 15:58</td><td>7/20 19:58</td><td class="num">約4時間</td><td class="num">30.6℃</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/21 01:58</td><td>7/21 11:58</td><td class="num">約10時間</td><td class="num">66.5%</td></tr>
+<tr><td><span class="dev high">温度 ▲ 上限超過</span></td><td>7/21 15:58</td><td>7/21 19:58</td><td class="num">約4時間</td><td class="num">31.0℃</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/22 03:58</td><td>7/22 11:58</td><td class="num">約8時間</td><td class="num">65.4%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/22 13:58</td><td>7/22 21:58</td><td class="num">約8時間</td><td class="num">40.4%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/23 03:58</td><td>7/23 09:58</td><td class="num">約6時間</td><td class="num">63.1%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/23 11:58</td><td>7/23 17:58</td><td class="num">約6時間</td><td class="num">43.1%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/23 19:58</td><td>7/29 15:58</td><td class="num">約140時間</td><td class="num">79.5%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/29 19:58</td><td>7/30 11:58</td><td class="num">約16時間</td><td class="num">73.7%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/30 19:58</td><td>7/31 11:58</td><td class="num">約16時間</td><td class="num">73.4%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>8/1 15:58</td><td>8/1 19:58</td><td class="num">約4時間</td><td class="num">49.5%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>8/4 11:58</td><td>8/5 05:58</td><td class="num">約18時間</td><td class="num">44.5%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>8/5 09:58</td><td>8/6 03:58</td><td class="num">約18時間</td><td class="num">44.7%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>8/6 09:58</td><td>8/7 11:58</td><td class="num">約26時間</td><td class="num">44.0%</td></tr></tbody>
+        </table></div>
+        <p class="note">連続する同種別の範囲外記録を1件に統合し、最終記録の約2時間後までを継続時間としています。</p>
+      </details>
+    </section>
+
+    <section class="room" id="room1">
+      <h2>②第1教室（西）</h2>
+      <div class="room-meta">
+        <span>温度 22.1〜31.0℃(平均 24.8℃)・逸脱 <span class="pill sev-low">0.7%</span></span>
+        <span>湿度 40.1〜78.1%(平均 65.0%)・逸脱 <span class="pill sev-high">82.6%</span></span>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span class="key"><i class="swatch line indoor"></i>室内</span>
+        <span class="key"><i class="swatch line outdoor"></i>外気(参考)</span>
+        <span class="key"><i class="swatch dot dev-dot"></i>基準逸脱</span>
+        <span class="key"><i class="swatch band-chip"></i>目標範囲</span>
+      </div>
+      <h3>温度(℃)<small>目標 25℃±5℃</small></h3>
+      <div class="chart-box"><canvas id="c-room1-t" role="img" aria-label="②第1教室（西）の温度推移グラフ"></canvas></div>
+      <h3>湿度(%)<small>目標 55%±5%</small></h3>
+      <div class="chart-box"><canvas id="c-room1-h" role="img" aria-label="②第1教室（西）の湿度推移グラフ"></canvas></div>
+      <details class="episodes">
+        <summary>基準逸脱の時間帯一覧 <span class="count">16件</span>(温度 計約4時間 / 湿度 計約476時間)</summary>
+        <div class="table-scroll"><table>
+          <thead><tr><th>種別</th><th>開始</th><th>終了</th><th>継続</th><th>ピーク値</th></tr></thead>
+          <tbody><tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/15 16:02</td><td>7/15 18:02</td><td class="num">約2時間</td><td class="num">47.8%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/15 20:02</td><td>7/17 12:02</td><td class="num">約40時間</td><td class="num">74.2%</td></tr>
+<tr><td><span class="dev high">温度 ▲ 上限超過</span></td><td>7/16 16:02</td><td>7/16 20:02</td><td class="num">約4時間</td><td class="num">31.0℃</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/17 14:02</td><td>7/18 12:02</td><td class="num">約22時間</td><td class="num">78.1%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/18 14:02</td><td>7/19 12:02</td><td class="num">約22時間</td><td class="num">71.9%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/19 14:02</td><td>7/19 22:02</td><td class="num">約8時間</td><td class="num">44.9%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/20 04:02</td><td>7/20 08:02</td><td class="num">約4時間</td><td class="num">63.8%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/20 10:02</td><td>7/21 00:02</td><td class="num">約14時間</td><td class="num">41.9%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/21 10:02</td><td>7/22 02:02</td><td class="num">約16時間</td><td class="num">40.1%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/22 10:02</td><td>7/22 20:02</td><td class="num">約10時間</td><td class="num">41.9%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/24 00:02</td><td>7/29 14:02</td><td class="num">約134時間</td><td class="num">76.8%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/29 20:02</td><td>7/30 14:02</td><td class="num">約18時間</td><td class="num">70.5%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/30 18:02</td><td>7/31 16:02</td><td class="num">約22時間</td><td class="num">70.5%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/31 18:02</td><td>8/6 16:02</td><td class="num">約142時間</td><td class="num">76.6%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>8/6 18:02</td><td>8/7 10:02</td><td class="num">約16時間</td><td class="num">68.2%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>8/8 04:02</td><td>8/8 10:02</td><td class="num">約6時間</td><td class="num">61.3%</td></tr></tbody>
+        </table></div>
+        <p class="note">連続する同種別の範囲外記録を1件に統合し、最終記録の約2時間後までを継続時間としています。</p>
+      </details>
+    </section>
+
+    <section class="room" id="room2">
+      <h2>③第2教室（中央）</h2>
+      <div class="room-meta">
+        <span>温度 23.4〜31.6℃(平均 26.0℃)・逸脱 <span class="pill sev-low">2.8%</span></span>
+        <span>湿度 46.2〜74.5%(平均 60.9%)・逸脱 <span class="pill sev-high">58.3%</span></span>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span class="key"><i class="swatch line indoor"></i>室内</span>
+        <span class="key"><i class="swatch line outdoor"></i>外気(参考)</span>
+        <span class="key"><i class="swatch dot dev-dot"></i>基準逸脱</span>
+        <span class="key"><i class="swatch band-chip"></i>目標範囲</span>
+      </div>
+      <h3>温度(℃)<small>目標 25℃±5℃</small></h3>
+      <div class="chart-box"><canvas id="c-room2-t" role="img" aria-label="③第2教室（中央）の温度推移グラフ"></canvas></div>
+      <h3>湿度(%)<small>目標 55%±5%</small></h3>
+      <div class="chart-box"><canvas id="c-room2-h" role="img" aria-label="③第2教室（中央）の湿度推移グラフ"></canvas></div>
+      <details class="episodes">
+        <summary>基準逸脱の時間帯一覧 <span class="count">18件</span>(温度 計約16時間 / 湿度 計約336時間)</summary>
+        <div class="table-scroll"><table>
+          <thead><tr><th>種別</th><th>開始</th><th>終了</th><th>継続</th><th>ピーク値</th></tr></thead>
+          <tbody><tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/15 18:02</td><td>7/17 10:02</td><td class="num">約40時間</td><td class="num">74.5%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/17 12:02</td><td>7/19 14:02</td><td class="num">約50時間</td><td class="num">73.2%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/19 18:02</td><td>7/20 12:02</td><td class="num">約18時間</td><td class="num">67.5%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/20 18:02</td><td>7/20 20:02</td><td class="num">約2時間</td><td class="num">49.9%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/21 06:02</td><td>7/21 10:02</td><td class="num">約4時間</td><td class="num">61.6%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/21 16:02</td><td>7/21 18:02</td><td class="num">約2時間</td><td class="num">48.6%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/22 04:02</td><td>7/22 10:02</td><td class="num">約6時間</td><td class="num">62.4%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/22 14:02</td><td>7/22 18:02</td><td class="num">約4時間</td><td class="num">46.2%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/22 20:02</td><td>7/23 10:02</td><td class="num">約14時間</td><td class="num">64.0%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/23 12:02</td><td>7/23 14:02</td><td class="num">約2時間</td><td class="num">48.1%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/24 02:02</td><td>7/31 16:02</td><td class="num">約182時間</td><td class="num">73.8%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>8/5 06:02</td><td>8/5 08:02</td><td class="num">約2時間</td><td class="num">49.8%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>8/6 00:02</td><td>8/6 06:02</td><td class="num">約6時間</td><td class="num">49.6%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>8/6 08:02</td><td>8/6 10:02</td><td class="num">約2時間</td><td class="num">49.7%</td></tr>
+<tr><td><span class="dev high">温度 ▲ 上限超過</span></td><td>8/6 16:02</td><td>8/6 18:02</td><td class="num">約2時間</td><td class="num">30.4℃</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>8/6 20:02</td><td>8/6 22:02</td><td class="num">約2時間</td><td class="num">49.8%</td></tr>
+<tr><td><span class="dev high">温度 ▲ 上限超過</span></td><td>8/7 12:02</td><td>8/8 00:02</td><td class="num">約12時間</td><td class="num">31.6℃</td></tr>
+<tr><td><span class="dev high">温度 ▲ 上限超過</span></td><td>8/8 12:02</td><td>8/8 14:02</td><td class="num">約2時間</td><td class="num">30.6℃</td></tr></tbody>
+        </table></div>
+        <p class="note">連続する同種別の範囲外記録を1件に統合し、最終記録の約2時間後までを継続時間としています。</p>
+      </details>
+    </section>
+
+    <section class="room" id="room3">
+      <h2>④第3教室（東）</h2>
+      <div class="room-meta">
+        <span>温度 22.9〜29.9℃(平均 24.9℃)・逸脱 <span class="pill sev-ok">0.0%</span></span>
+        <span>湿度 45.9〜77.3%(平均 64.7%)・逸脱 <span class="pill sev-high">71.5%</span></span>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span class="key"><i class="swatch line indoor"></i>室内</span>
+        <span class="key"><i class="swatch line outdoor"></i>外気(参考)</span>
+        <span class="key"><i class="swatch dot dev-dot"></i>基準逸脱</span>
+        <span class="key"><i class="swatch band-chip"></i>目標範囲</span>
+      </div>
+      <h3>温度(℃)<small>目標 25℃±5℃</small></h3>
+      <div class="chart-box"><canvas id="c-room3-t" role="img" aria-label="④第3教室（東）の温度推移グラフ"></canvas></div>
+      <h3>湿度(%)<small>目標 55%±5%</small></h3>
+      <div class="chart-box"><canvas id="c-room3-h" role="img" aria-label="④第3教室（東）の湿度推移グラフ"></canvas></div>
+      <details class="episodes">
+        <summary>基準逸脱の時間帯一覧 <span class="count">17件</span>(温度 計約0時間 / 湿度 計約412時間)</summary>
+        <div class="table-scroll"><table>
+          <thead><tr><th>種別</th><th>開始</th><th>終了</th><th>継続</th><th>ピーク値</th></tr></thead>
+          <tbody><tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/15 16:00</td><td>7/15 18:00</td><td class="num">約2時間</td><td class="num">48.3%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/15 18:00</td><td>7/17 10:00</td><td class="num">約40時間</td><td class="num">77.3%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/17 12:00</td><td>7/19 12:00</td><td class="num">約48時間</td><td class="num">76.1%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/19 14:00</td><td>7/19 16:00</td><td class="num">約2時間</td><td class="num">62.8%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/20 02:00</td><td>7/20 10:00</td><td class="num">約8時間</td><td class="num">67.6%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/21 08:00</td><td>7/21 10:00</td><td class="num">約2時間</td><td class="num">60.5%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/21 16:00</td><td>7/21 22:00</td><td class="num">約6時間</td><td class="num">49.2%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/22 12:00</td><td>7/22 14:00</td><td class="num">約2時間</td><td class="num">48.4%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/22 14:00</td><td>7/22 16:00</td><td class="num">約2時間</td><td class="num">63.1%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/22 16:00</td><td>7/22 18:00</td><td class="num">約2時間</td><td class="num">46.4%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/23 08:00</td><td>7/23 10:00</td><td class="num">約2時間</td><td class="num">60.1%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/23 10:00</td><td>7/23 16:00</td><td class="num">約6時間</td><td class="num">48.0%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/24 00:00</td><td>7/31 12:00</td><td class="num">約180時間</td><td class="num">76.7%</td></tr>
+<tr><td><span class="dev low">湿度 ▼ 下限未満</span></td><td>7/31 12:00</td><td>7/31 16:00</td><td class="num">約4時間</td><td class="num">45.9%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>8/2 00:00</td><td>8/5 16:00</td><td class="num">約88時間</td><td class="num">69.8%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>8/5 22:00</td><td>8/6 14:00</td><td class="num">約16時間</td><td class="num">65.8%</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>8/8 08:00</td><td>8/8 10:00</td><td class="num">約2時間</td><td class="num">60.1%</td></tr></tbody>
+        </table></div>
+        <p class="note">連続する同種別の範囲外記録を1件に統合し、最終記録の約2時間後までを継続時間としています。</p>
+      </details>
+    </section>
+
+    <section class="room" id="north">
+      <h2>⑤北側保管室</h2>
+      <div class="room-meta">
+        <span>温度 21.6〜30.9℃(平均 25.6℃)・逸脱 <span class="pill sev-low">3.8%</span></span>
+        <span>湿度 56.5〜90.4%(平均 75.1%)・逸脱 <span class="pill sev-high">99.7%</span></span>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span class="key"><i class="swatch line indoor"></i>室内</span>
+        <span class="key"><i class="swatch line outdoor"></i>外気(参考)</span>
+        <span class="key"><i class="swatch dot dev-dot"></i>基準逸脱</span>
+        <span class="key"><i class="swatch band-chip"></i>目標範囲</span>
+      </div>
+      <h3>温度(℃)<small>目標 25℃±5℃</small></h3>
+      <div class="chart-box"><canvas id="c-north-t" role="img" aria-label="⑤北側保管室の温度推移グラフ"></canvas></div>
+      <h3>湿度(%)<small>目標 55%±5%</small></h3>
+      <div class="chart-box"><canvas id="c-north-h" role="img" aria-label="⑤北側保管室の湿度推移グラフ"></canvas></div>
+      <details class="episodes">
+        <summary>基準逸脱の時間帯一覧 <span class="count">6件</span>(温度 計約22時間 / 湿度 計約574時間)</summary>
+        <div class="table-scroll"><table>
+          <thead><tr><th>種別</th><th>開始</th><th>終了</th><th>継続</th><th>ピーク値</th></tr></thead>
+          <tbody><tr><td><span class="dev high">温度 ▲ 上限超過</span></td><td>7/15 15:55</td><td>7/15 19:55</td><td class="num">約4時間</td><td class="num">30.9℃</td></tr>
+<tr><td><span class="dev high">湿度 ▲ 上限超過</span></td><td>7/15 15:55</td><td>8/8 13:55</td><td class="num">約574時間</td><td class="num">90.4%</td></tr>
+<tr><td><span class="dev high">温度 ▲ 上限超過</span></td><td>7/16 15:55</td><td>7/16 17:55</td><td class="num">約2時間</td><td class="num">30.6℃</td></tr>
+<tr><td><span class="dev high">温度 ▲ 上限超過</span></td><td>7/20 13:55</td><td>7/20 19:55</td><td class="num">約6時間</td><td class="num">30.7℃</td></tr>
+<tr><td><span class="dev high">温度 ▲ 上限超過</span></td><td>7/21 15:55</td><td>7/21 19:55</td><td class="num">約4時間</td><td class="num">30.5℃</td></tr>
+<tr><td><span class="dev high">温度 ▲ 上限超過</span></td><td>7/22 15:55</td><td>7/22 21:55</td><td class="num">約6時間</td><td class="num">30.7℃</td></tr></tbody>
+        </table></div>
+        <p class="note">連続する同種別の範囲外記録を1件に統合し、最終記録の約2時間後までを継続時間としています。</p>
+      </details>
+    </section>
+
+  <section class="room" id="outdoor">
+    <h2>柴田町の外気(比較用)</h2>
+    <div class="room-meta">
+      <span>外気温 17.9〜34.1℃ / 外気湿度 57〜100%</span>
+      <span>Open-Meteo ERA5 再解析・1時間値(北緯38.066784 / 東経140.7537 付近)</span>
+    </div>
+    <div class="legend" aria-hidden="true">
+      <span class="key"><i class="swatch line outdoor"></i>外気</span>
+      <span class="key"><i class="swatch band-chip"></i>収蔵庫の目標範囲(参考)</span>
+    </div>
+    <h3>外気温(℃)</h3>
+    <div class="chart-box"><canvas id="c-out-t" role="img" aria-label="柴田町の外気温推移グラフ"></canvas></div>
+    <h3>外気湿度(%)</h3>
+    <div class="chart-box"><canvas id="c-out-h" role="img" aria-label="柴田町の外気湿度推移グラフ"></canvas></div>
+  </section>
+
+  <footer class="src">
+    <p>屋内データ: 温湿度ロガー5台(2時間間隔)。しばたの郷土館 第二収蔵庫にて測定。</p>
+    <p>外気データ: Open-Meteo Historical Weather API(ERA5 再解析、宮城県柴田町 北緯38.066784・東経140.7537 付近の推定値)。アメダス実測値ではありません。</p>
+    <p>基準逸脱の判定: 温度 20〜30℃・湿度 50〜60% の範囲外。レポート生成日: 2026-09-11</p>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const DATA = {"rooms":[{"id":"hall","name":"①ホール","data":[[838,26.2,56.0],[958,29.6,41.3],[1078,30.9,54.4],[1198,30.5,60.3],[1318,29.8,63.4],[1438,29.1,65.7],[1558,28.4,67.2],[1678,27.9,68.5],[1798,27.5,69.2],[1918,27.7,70.1],[2038,28.1,70.4],[2158,28.9,70.6],[2278,31.0,69.2],[2398,33.0,65.9],[2518,32.1,67.9],[2638,31.1,69.8],[2758,30.1,70.9],[2878,29.3,71.6],[2998,28.4,71.9],[3118,27.8,72.2],[3238,27.4,72.6],[3358,27.2,72.7],[3478,26.8,59.3],[3598,24.6,48.8],[3718,23.4,50.2],[3838,22.7,50.7],[3958,23.4,66.7],[4078,24.2,69.8],[4198,24.5,71.5],[4318,24.6,72.8],[4438,24.6,73.5],[4558,24.6,73.6],[4678,24.5,73.9],[4798,24.7,74.3],[4918,25.1,71.1],[5038,25.9,68.2],[5158,25.8,65.9],[5278,25.7,66.4],[5398,25.6,68.3],[5518,25.3,72.5],[5638,25.1,74.2],[5758,25.0,74.9],[5878,24.9,75.0],[5998,24.7,75.0],[6118,24.6,75.2],[6238,24.7,75.3],[6358,25.4,70.6],[6478,27.1,65.6],[6598,28.4,60.1],[6718,29.9,55.4],[6838,30.2,52.7],[6958,28.8,53.0],[7078,27.6,57.0],[7198,26.5,59.2],[7318,25.9,66.2],[7438,25.6,67.7],[7558,25.3,68.0],[7678,25.4,68.0],[7798,26.8,65.2],[7918,28.7,61.4],[8038,29.9,57.0],[8158,30.6,54.2],[8278,30.6,52.5],[8398,29.4,52.1],[8518,28.2,54.4],[8638,27.3,58.0],[8758,26.4,62.2],[8878,26.1,66.5],[8998,25.7,66.3],[9118,26.0,66.4],[9238,27.2,62.6],[9358,28.5,56.7],[9478,29.1,55.8],[9598,30.9,53.1],[9718,31.0,50.6],[9838,29.6,50.4],[9958,28.4,52.5],[10078,27.4,57.6],[10198,26.6,59.1],[10318,26.0,65.4],[10438,25.7,65.1],[10558,25.8,65.3],[10678,26.9,63.1],[10798,27.9,52.5],[10918,27.7,43.8],[11038,28.8,40.4],[11158,29.4,44.8],[11278,28.9,48.4],[11398,28.1,51.5],[11518,27.3,54.4],[11638,26.6,58.6],[11758,25.9,60.4],[11878,25.7,63.1],[11998,25.9,63.0],[12118,26.8,52.7],[12238,27.3,45.7],[12358,26.2,43.1],[12478,25.6,43.3],[12598,25.7,56.8],[12718,25.7,62.1],[12838,25.5,64.3],[12958,25.4,65.6],[13078,25.2,68.3],[13198,25.1,68.6],[13318,25.0,69.3],[13438,25.1,69.1],[13558,25.2,68.7],[13678,25.3,72.1],[13798,25.3,70.1],[13918,25.4,71.4],[14038,25.3,72.1],[14158,25.2,73.8],[14278,25.0,73.5],[14398,24.9,73.5],[14518,24.8,73.6],[14638,24.7,73.6],[14758,24.6,74.0],[14878,24.5,74.4],[14998,24.7,74.7],[15118,24.9,74.0],[15238,25.2,73.3],[15358,25.3,73.4],[15478,25.2,75.2],[15598,24.9,75.4],[15718,24.8,75.5],[15838,24.6,75.3],[15958,24.4,75.5],[16078,24.3,75.9],[16198,24.1,76.2],[16318,24.1,76.5],[16438,24.3,76.4],[16558,24.6,76.7],[16678,24.6,77.4],[16798,24.7,77.1],[16918,24.6,77.1],[17038,24.4,76.9],[17158,24.1,75.9],[17278,23.7,75.6],[17398,23.4,75.6],[17518,23.1,75.6],[17638,22.9,75.9],[17758,22.9,76.0],[17878,23.5,76.2],[17998,24.4,74.8],[18118,24.9,72.4],[18238,25.1,70.5],[18358,25.2,73.1],[18478,24.9,74.2],[18598,24.7,74.5],[18718,24.3,74.8],[18838,23.9,75.1],[18958,23.7,75.4],[19078,23.4,75.8],[19198,23.5,76.2],[19318,24.0,76.1],[19438,24.4,76.0],[19558,24.7,76.3],[19678,24.7,77.2],[19798,24.7,78.4],[19918,24.7,78.4],[20038,24.6,78.4],[20158,24.4,78.3],[20278,24.3,78.5],[20398,24.1,78.7],[20518,24.1,78.9],[20638,24.2,79.5],[20758,24.9,78.5],[20878,26.2,71.4],[20998,27.2,64.8],[21118,27.8,58.0],[21238,27.2,59.5],[21358,26.3,62.6],[21478,25.7,67.2],[21598,25.3,70.8],[21718,24.9,71.6],[21838,24.5,72.3],[21958,24.1,72.8],[22078,24.3,73.7],[22198,24.9,72.8],[22318,26.9,59.3],[22438,27.9,53.1],[22558,27.9,52.2],[22678,27.4,53.2],[22798,26.4,61.1],[22918,25.8,67.2],[23038,25.3,69.5],[23158,25.0,70.5],[23278,24.7,71.5],[23398,24.5,72.2],[23518,24.5,73.4],[23638,25.2,70.5],[23758,26.7,57.9],[23878,27.1,52.5],[23998,27.2,54.5],[24118,26.9,54.1],[24238,26.3,53.5],[24358,25.8,55.3],[24478,25.7,55.0],[24598,25.4,54.9],[24718,25.3,55.1],[24838,25.3,55.3],[24958,25.3,55.5],[25078,25.4,56.3],[25198,25.7,50.4],[25318,24.8,50.1],[25438,24.3,49.9],[25558,23.8,49.5],[25678,22.9,50.0],[25798,22.3,50.2],[25918,21.8,51.1],[26038,21.4,51.9],[26158,21.1,51.9],[26278,21.0,52.0],[26398,20.9,51.7],[26518,21.1,52.3],[26638,21.1,53.1],[26758,21.4,52.4],[26878,21.4,52.5],[26998,21.1,51.9],[27118,20.8,52.8],[27238,20.8,53.4],[27358,20.7,53.1],[27478,20.6,54.3],[27598,20.5,55.0],[27718,20.4,55.0],[27838,20.4,55.2],[27958,20.6,54.8],[28078,20.7,53.1],[28198,20.7,52.5],[28318,21.0,51.6],[28438,21.1,51.5],[28558,20.9,53.0],[28678,20.9,52.4],[28798,20.6,52.9],[28918,20.6,54.2],[29038,20.4,54.1],[29158,20.2,54.6],[29278,20.3,55.5],[29398,21.1,53.5],[29518,22.3,48.1],[29638,23.6,47.2],[29758,24.1,47.0],[29878,23.7,44.5],[29998,22.7,45.4],[30118,22.1,45.8],[30238,21.8,47.9],[30358,21.4,48.8],[30478,21.0,49.9],[30598,20.7,51.2],[30718,20.8,51.5],[30838,21.7,46.9],[30958,22.4,47.8],[31078,23.7,47.0],[31198,24.2,45.3],[31318,23.6,45.2],[31438,22.8,44.7],[31558,22.2,45.6],[31678,21.7,46.6],[31798,21.2,49.2],[31918,21.0,51.4],[32038,20.8,52.1],[32158,21.1,51.2],[32278,22.2,48.1],[32398,23.9,47.3],[32518,25.3,46.8],[32638,25.8,45.3],[32758,24.9,44.4],[32878,24.0,44.1],[32998,23.4,44.0],[33118,22.9,45.9],[33238,22.8,45.1],[33358,22.4,45.6],[33478,22.3,45.5],[33598,22.7,47.0],[33718,24.2,47.6],[33838,26.4,54.1],[33958,28.9,53.3],[34078,29.4,51.6],[34198,29.2,51.1],[34318,28.5,50.5],[34438,27.9,50.9],[34558,27.6,50.7],[34678,27.2,51.1],[34798,27.0,51.2],[34918,26.8,53.8],[35038,26.8,53.2],[35158,27.4,54.0],[35278,28.6,52.7]]},{"id":"room1","name":"②第1教室（西）","data":[[842,25.6,55.0],[962,26.4,47.8],[1082,28.2,55.6],[1202,28.2,60.2],[1322,28.1,63.0],[1442,27.8,65.3],[1562,27.4,66.8],[1682,27.2,67.9],[1802,26.9,68.4],[1922,27.1,68.2],[2042,27.4,69.3],[2162,28.2,69.5],[2282,29.9,70.3],[2402,31.0,70.9],[2522,30.6,71.5],[2642,29.9,72.6],[2762,29.3,73.2],[2882,28.8,73.5],[3002,28.2,73.8],[3122,27.7,74.2],[3242,27.3,74.1],[3362,27.2,74.0],[3482,26.7,71.1],[3602,24.5,55.1],[3722,23.2,62.7],[3842,24.4,78.1],[3962,24.5,72.2],[4082,24.4,70.5],[4202,24.5,72.3],[4322,24.5,74.2],[4442,24.4,74.3],[4562,24.4,74.8],[4682,24.4,74.8],[4802,24.6,73.9],[4922,24.8,65.4],[5042,24.7,57.3],[5162,24.9,61.3],[5282,24.9,61.3],[5402,24.7,61.0],[5522,24.7,63.2],[5642,24.8,66.3],[5762,24.7,68.4],[5882,24.6,71.0],[6002,24.6,71.6],[6122,24.5,71.9],[6242,24.8,71.3],[6362,25.3,63.5],[6482,25.6,52.1],[6602,26.0,45.8],[6722,26.1,44.9],[6842,25.8,47.7],[6962,25.2,48.2],[7082,25.6,54.1],[7202,25.2,54.9],[7322,25.0,58.0],[7442,25.0,60.2],[7562,25.1,63.8],[7682,25.3,59.6],[7802,25.5,49.6],[7922,26.4,44.6],[8042,26.2,44.3],[8162,26.6,41.9],[8282,26.4,43.7],[8402,25.6,44.8],[8522,25.6,49.4],[8642,25.3,50.0],[8762,25.1,52.2],[8882,24.9,53.7],[9002,25.1,56.1],[9122,25.6,55.3],[9242,25.7,47.5],[9362,26.2,42.8],[9482,26.2,43.4],[9602,26.4,40.1],[9722,26.1,41.5],[9842,25.4,43.4],[9962,25.3,46.6],[10082,25.5,49.3],[10202,25.2,51.3],[10322,24.9,53.1],[10442,25.1,54.9],[10562,25.2,51.4],[10682,25.8,46.8],[10802,26.8,47.6],[10922,26.1,46.6],[11042,25.4,41.9],[11162,25.6,48.6],[11282,25.6,51.3],[11402,25.7,52.6],[11522,25.4,54.4],[11642,25.2,56.6],[11762,25.2,58.3],[11882,25.1,58.9],[12002,25.4,57.1],[12122,25.8,55.2],[12242,26.6,55.6],[12362,25.4,54.0],[12482,25.3,55.5],[12602,25.2,57.0],[12722,25.1,58.2],[12842,24.9,59.6],[12962,24.8,60.6],[13082,24.8,61.2],[13202,24.7,62.0],[13322,24.6,63.2],[13442,24.7,62.9],[13562,24.8,64.0],[13682,24.8,63.5],[13802,24.7,63.4],[13922,24.8,63.8],[14042,24.8,64.0],[14162,24.6,64.9],[14282,24.7,66.5],[14402,24.7,68.2],[14522,24.6,68.8],[14642,24.6,69.2],[14762,24.5,69.7],[14882,24.4,70.1],[15002,24.6,69.2],[15122,24.9,68.8],[15242,24.9,67.8],[15362,24.8,65.5],[15482,24.6,66.4],[15602,24.6,68.5],[15722,24.6,69.9],[15842,24.4,70.6],[15962,24.3,71.0],[16082,24.2,71.5],[16202,24.1,72.0],[16322,24.2,72.4],[16442,24.3,72.1],[16562,24.5,72.8],[16682,24.6,72.8],[16802,24.6,73.7],[16922,24.4,74.0],[17042,24.3,74.3],[17162,24.1,74.3],[17282,23.8,74.1],[17402,23.6,74.2],[17522,23.4,74.3],[17642,23.3,74.4],[17762,23.3,74.1],[17882,23.8,73.9],[18002,24.3,72.1],[18122,24.5,69.5],[18242,24.7,69.0],[18362,24.7,67.6],[18482,24.5,69.2],[18602,24.4,71.0],[18722,24.2,72.1],[18842,23.9,72.9],[18962,23.7,73.4],[19082,23.6,73.4],[19202,23.7,73.7],[19322,24.1,73.7],[19442,24.3,74.7],[19562,24.4,74.7],[19682,24.4,74.5],[19802,24.4,76.0],[19922,24.4,76.4],[20042,24.2,76.5],[20162,24.1,76.5],[20282,24.0,76.6],[20402,23.9,76.7],[20522,23.9,76.8],[20642,24.1,76.0],[20762,24.6,72.5],[20882,25.1,62.4],[21002,24.9,58.1],[21122,25.4,58.2],[21242,25.1,58.9],[21362,24.9,61.0],[21482,24.8,63.7],[21602,24.7,66.7],[21722,24.6,68.3],[21842,24.3,69.5],[21962,24.2,69.9],[22082,24.4,70.5],[22202,24.9,67.4],[22322,25.1,62.6],[22442,24.7,59.3],[22562,24.9,59.8],[22682,24.9,61.2],[22802,24.9,63.1],[22922,24.7,64.6],[23042,24.7,67.6],[23162,24.6,68.7],[23282,24.4,69.8],[23402,24.3,70.5],[23522,24.5,70.4],[23642,25.0,66.1],[23762,25.2,61.4],[23882,25.3,60.5],[24002,25.0,60.0],[24122,25.2,61.2],[24242,25.1,63.5],[24362,24.9,64.9],[24482,24.8,66.2],[24602,24.8,68.3],[24722,24.8,69.7],[24842,24.7,70.5],[24962,24.8,70.8],[25082,24.8,68.8],[25202,25.0,64.9],[25322,24.9,62.9],[25442,25.0,65.0],[25562,24.7,63.8],[25682,24.5,64.9],[25802,24.3,66.5],[25922,24.1,69.1],[26042,23.9,70.5],[26162,23.7,71.3],[26282,23.6,71.8],[26402,23.4,72.3],[26522,23.4,72.8],[26642,23.6,73.4],[26762,23.8,73.8],[26882,23.8,74.1],[27002,23.6,74.0],[27122,23.3,74.2],[27242,23.1,74.2],[27362,22.8,74.2],[27482,22.6,74.5],[27602,22.4,74.4],[27722,22.3,74.5],[27842,22.2,74.5],[27962,22.3,74.6],[28082,22.6,75.0],[28202,22.9,75.5],[28322,23.5,76.4],[28442,23.5,76.6],[28562,23.3,76.1],[28682,23.0,75.9],[28802,22.7,75.8],[28922,22.5,75.8],[29042,22.3,75.8],[29162,22.1,75.8],[29282,22.1,75.6],[29402,23.2,75.5],[29522,24.3,72.3],[29642,24.7,64.7],[29762,24.9,66.7],[29882,24.4,64.4],[30002,24.2,67.8],[30122,23.9,69.6],[30242,23.7,70.6],[30362,23.4,71.5],[30482,23.0,72.1],[30602,22.7,72.6],[30722,22.9,72.6],[30842,23.9,71.3],[30962,24.4,67.1],[31082,25.1,63.6],[31202,24.9,61.0],[31322,24.6,64.3],[31442,24.4,65.9],[31562,24.1,67.3],[31682,23.7,68.6],[31802,23.4,69.8],[31922,23.1,70.6],[32042,22.9,71.1],[32162,23.4,71.4],[32282,24.4,69.4],[32402,24.8,62.1],[32522,25.4,61.3],[32642,25.0,58.9],[32762,25.1,60.9],[32882,24.6,61.7],[33002,24.4,62.8],[33122,24.3,63.9],[33242,24.2,66.9],[33362,24.1,67.8],[33482,24.0,68.2],[33602,24.3,67.2],[33722,24.5,55.1],[33842,25.3,56.8],[33962,25.9,52.3],[34082,26.0,57.7],[34202,25.6,57.4],[34322,25.3,57.5],[34442,25.1,57.2],[34562,25.3,59.1],[34682,25.1,59.8],[34802,24.9,60.5],[34922,24.9,61.3],[35042,24.9,60.3],[35162,25.2,57.5],[35282,26.2,59.3]]},{"id":"room2","name":"③第2教室（中央）","data":[[842,24.9,56.4],[962,25.0,52.5],[1082,26.8,64.6],[1202,27.3,67.8],[1322,27.3,69.3],[1442,27.2,69.8],[1562,27.0,70.1],[1682,26.8,70.2],[1802,26.6,70.5],[1922,26.7,71.4],[2042,27.0,72.2],[2162,27.5,73.0],[2282,28.9,74.5],[2402,29.9,74.0],[2522,29.8,74.2],[2642,29.4,73.7],[2762,28.9,74.1],[2882,28.4,73.8],[3002,28.0,73.6],[3122,27.6,73.5],[3242,27.3,73.5],[3362,27.1,73.5],[3482,25.4,59.6],[3602,23.9,66.7],[3722,23.7,64.9],[3842,23.9,69.8],[3962,24.3,70.6],[4082,24.6,70.9],[4202,24.6,71.3],[4322,24.6,72.0],[4442,24.6,72.2],[4562,24.5,72.9],[4682,24.4,72.9],[4802,24.5,73.1],[4922,24.8,71.0],[5042,25.4,70.1],[5162,25.4,70.0],[5282,25.3,69.2],[5402,25.4,70.9],[5522,25.1,68.6],[5642,25.0,71.0],[5762,24.9,72.2],[5882,24.8,72.6],[6002,24.7,72.6],[6122,24.6,72.8],[6242,24.7,73.2],[6362,25.1,70.9],[6482,25.9,72.9],[6602,26.2,56.8],[6722,26.8,59.2],[6842,26.7,61.5],[6962,26.6,60.3],[7082,26.2,61.0],[7202,25.8,62.7],[7322,25.6,63.2],[7442,25.4,66.7],[7562,25.3,67.5],[7682,25.4,65.0],[7802,26.0,60.7],[7922,26.6,54.4],[8042,26.9,51.5],[8162,26.7,50.4],[8282,26.3,49.9],[8402,26.7,57.2],[8522,26.3,55.4],[8642,25.9,56.1],[8762,25.8,58.3],[8882,25.6,59.1],[9002,25.4,60.3],[9122,25.6,61.6],[9242,26.1,56.5],[9362,26.4,53.6],[9482,26.6,53.7],[9602,26.4,48.6],[9722,26.5,50.4],[9842,26.3,51.1],[9962,26.2,55.4],[10082,26.0,56.5],[10202,25.8,56.9],[10322,25.7,60.1],[10442,25.6,62.4],[10562,25.7,61.8],[10682,26.1,54.7],[10802,26.3,50.3],[10922,26.4,48.3],[11042,26.4,46.2],[11162,27.4,58.7],[11282,27.8,60.8],[11402,27.7,62.1],[11522,27.4,62.5],[11642,27.1,62.5],[11762,26.6,62.4],[11882,26.3,62.8],[12002,26.7,64.0],[12122,26.6,52.8],[12242,26.4,48.1],[12362,26.7,51.5],[12482,26.2,51.5],[12602,26.3,55.3],[12722,25.7,54.7],[12842,25.8,58.4],[12962,25.7,59.9],[13082,25.6,61.1],[13202,25.4,62.1],[13322,25.3,62.7],[13442,25.3,64.4],[13562,25.4,65.1],[13682,25.3,64.1],[13802,25.3,63.9],[13922,25.4,64.7],[14042,25.3,63.3],[14162,25.2,65.4],[14282,25.1,65.9],[14402,24.9,65.8],[14522,24.8,66.5],[14642,24.7,66.1],[14762,24.6,66.1],[14882,24.5,66.2],[15002,24.6,66.9],[15122,24.8,67.5],[15242,25.1,67.8],[15362,25.2,68.2],[15482,25.1,68.8],[15602,24.9,67.7],[15722,24.8,67.7],[15842,24.6,68.4],[15962,24.4,68.4],[16082,24.3,68.6],[16202,24.2,68.7],[16322,24.2,68.7],[16442,24.3,69.5],[16562,24.4,69.9],[16682,24.5,70.1],[16802,24.4,70.1],[16922,24.3,69.8],[17042,24.2,70.0],[17162,24.1,70.8],[17282,23.9,70.2],[17402,23.7,70.1],[17522,23.6,70.0],[17642,23.4,70.1],[17762,23.4,69.9],[17882,23.7,70.4],[18002,24.3,70.5],[18122,24.8,70.4],[18242,25.1,70.4],[18362,25.0,69.5],[18482,24.8,70.0],[18602,24.6,69.8],[18722,24.4,70.8],[18842,24.1,70.7],[18962,23.9,70.7],[19082,23.8,70.7],[19202,23.8,70.4],[19322,24.0,71.0],[19442,24.2,71.4],[19562,24.4,71.8],[19682,24.4,71.5],[19802,24.4,72.1],[19922,24.3,72.3],[20042,24.2,72.5],[20162,24.1,72.7],[20282,24.0,72.2],[20402,23.9,71.8],[20522,23.8,72.2],[20642,23.9,73.4],[20762,24.6,73.8],[20882,25.3,67.6],[21002,25.8,68.8],[21122,25.8,62.3],[21242,25.7,62.9],[21362,25.6,65.6],[21482,25.4,67.0],[21602,25.2,67.0],[21722,24.8,67.8],[21842,24.6,68.3],[21962,24.3,68.7],[22082,24.4,69.0],[22202,24.9,67.1],[22322,25.5,63.3],[22442,25.9,62.6],[22562,25.6,60.1],[22682,25.4,61.4],[22802,25.4,64.3],[22922,25.3,66.5],[23042,25.0,67.5],[23162,24.8,68.1],[23282,24.6,68.3],[23402,24.4,68.5],[23522,24.4,69.0],[23642,25.1,68.2],[23762,25.3,66.4],[23882,25.4,66.1],[24002,26.1,53.0],[24122,25.9,52.0],[24242,25.9,50.1],[24362,26.1,50.7],[24482,25.9,50.9],[24602,26.1,50.5],[24722,26.2,50.5],[24842,26.2,50.9],[24962,26.3,51.7],[25082,26.4,51.1],[25202,27.7,50.9],[25322,28.5,51.3],[25442,28.6,50.8],[25562,28.4,50.3],[25682,28.1,50.3],[25802,27.7,51.2],[25922,27.3,50.2],[26042,27.1,51.3],[26162,26.7,50.2],[26282,26.5,51.2],[26402,26.3,50.1],[26522,26.1,51.3],[26642,26.2,50.0],[26762,26.3,51.1],[26882,26.2,50.6],[27002,26.1,50.8],[27122,25.9,50.4],[27242,25.6,51.1],[27362,25.4,50.0],[27482,25.2,51.2],[27602,25.0,51.0],[27722,24.8,50.1],[27842,24.8,50.3],[27962,24.8,51.3],[28082,24.9,50.2],[28202,25.2,51.0],[28322,25.7,51.2],[28442,25.8,50.5],[28562,25.7,51.3],[28682,25.4,50.2],[28802,25.3,51.0],[28922,25.0,50.9],[29042,24.8,50.1],[29162,24.6,50.1],[29282,24.6,50.9],[29402,25.3,50.2],[29522,26.4,51.3],[29642,27.6,52.0],[29762,27.9,51.2],[29882,27.8,51.1],[30002,27.4,50.8],[30122,26.9,50.6],[30242,26.5,50.6],[30362,26.1,51.0],[30482,25.7,50.7],[30602,25.3,49.8],[30722,25.4,50.3],[30842,26.3,50.7],[30962,27.0,51.3],[31082,28.2,50.7],[31202,28.6,50.5],[31322,28.4,50.8],[31442,27.8,50.8],[31562,27.3,50.3],[31682,26.8,49.7],[31802,26.3,49.8],[31922,25.9,49.6],[32042,25.6,50.0],[32162,25.8,49.7],[32282,26.9,51.8],[32402,28.7,52.0],[32522,30.0,51.0],[32642,30.4,50.9],[32762,29.9,50.5],[32882,29.4,49.8],[33002,28.9,50.5],[33122,28.4,50.6],[33242,28.1,50.2],[33362,27.8,50.4],[33482,27.5,50.2],[33602,27.7,50.8],[33722,28.7,51.6],[33842,30.2,55.3],[33962,31.5,56.6],[34082,31.6,54.8],[34202,31.3,55.5],[34322,30.7,54.8],[34442,30.1,55.4],[34562,29.6,55.3],[34682,29.1,55.4],[34802,28.7,55.5],[34922,28.3,55.7],[35042,28.3,55.6],[35162,29.1,55.9],[35282,30.6,56.4]]},{"id":"room3","name":"④第3教室（東）","data":[[840,25.0,56.9],[960,24.9,48.3],[1080,26.9,63.2],[1200,27.4,67.1],[1320,27.4,68.2],[1440,27.3,69.7],[1560,27.0,70.3],[1680,26.7,70.0],[1800,26.5,70.5],[1920,26.6,71.8],[2040,26.9,73.7],[2160,27.4,75.1],[2280,28.8,77.3],[2400,29.9,76.7],[2520,29.7,75.9],[2640,29.3,75.3],[2760,28.8,74.6],[2880,28.2,74.4],[3000,27.7,74.2],[3120,27.3,74.1],[3240,26.9,74.3],[3360,26.7,74.6],[3480,24.8,56.8],[3600,23.7,65.0],[3720,23.5,67.0],[3840,23.5,70.9],[3960,23.9,74.4],[4080,24.2,74.8],[4200,24.3,74.8],[4320,24.3,75.1],[4440,24.2,75.2],[4560,24.2,75.5],[4680,24.1,75.6],[4800,24.2,76.1],[4920,24.4,71.0],[5040,24.7,70.1],[5160,24.9,70.6],[5280,24.7,65.1],[5400,24.6,65.1],[5520,24.7,68.2],[5640,24.7,72.1],[5760,24.7,73.5],[5880,24.6,74.1],[6000,24.4,74.4],[6120,24.3,74.6],[6240,24.4,75.5],[6360,24.8,73.8],[6480,24.9,59.1],[6600,26.2,62.8],[6720,26.7,58.2],[6840,26.7,57.3],[6960,26.4,59.1],[7080,26.0,58.9],[7200,25.4,59.1],[7320,25.3,61.8],[7440,25.2,64.7],[7560,25.2,67.6],[7680,25.1,66.7],[7800,25.1,55.9],[7920,26.0,53.2],[8040,26.7,51.1],[8160,27.1,52.7],[8280,26.7,51.1],[8400,26.1,51.0],[8520,26.1,55.5],[8640,25.6,54.2],[8760,25.4,55.8],[8880,25.3,58.0],[9000,25.1,58.9],[9120,25.4,60.5],[9240,25.2,52.2],[9360,25.8,50.8],[9480,26.2,52.1],[9600,26.6,49.2],[9720,26.6,49.7],[9840,26.0,49.7],[9960,25.9,52.6],[10080,25.7,54.7],[10200,25.3,54.5],[10320,25.2,56.1],[10440,25.2,59.7],[10560,25.2,58.1],[10680,25.4,52.2],[10800,24.9,48.4],[10920,25.3,63.1],[11040,25.2,46.4],[11160,25.6,50.8],[11280,25.6,53.8],[11400,25.6,55.1],[11520,25.5,56.6],[11640,25.4,57.5],[11760,25.2,58.7],[11880,25.1,59.7],[12000,25.1,60.1],[12120,24.8,49.5],[12240,24.4,48.0],[12360,23.3,48.6],[12480,23.3,50.8],[12600,24.8,56.6],[12720,24.9,58.1],[12840,24.9,59.2],[12960,24.9,60.6],[13080,24.9,62.9],[13200,24.9,64.0],[13320,24.8,64.8],[13440,24.9,65.3],[13560,24.6,63.0],[13680,24.7,63.5],[13800,24.7,63.4],[13920,24.7,63.8],[14040,24.7,65.7],[14160,24.7,66.6],[14280,24.6,67.7],[14400,24.5,68.3],[14520,24.4,68.6],[14640,24.3,68.9],[14760,24.2,69.2],[14880,24.1,69.4],[15000,24.2,69.9],[15120,24.4,70.8],[15240,24.4,69.7],[15360,24.6,69.8],[15480,24.5,69.3],[15600,24.4,69.7],[15720,24.3,70.2],[15840,24.2,71.0],[15960,24.0,71.3],[16080,23.9,71.4],[16200,23.8,71.5],[16320,23.7,71.6],[16440,23.8,72.3],[16560,23.9,72.8],[16680,24.0,73.0],[16800,23.9,72.9],[16920,23.9,73.2],[17040,23.8,72.8],[17160,23.6,73.5],[17280,23.4,73.3],[17400,23.2,73.2],[17520,23.1,73.2],[17640,22.9,73.3],[17760,22.9,73.2],[17880,23.2,74.2],[18000,23.8,75.2],[18120,24.3,75.3],[18240,24.3,71.7],[18360,24.5,71.3],[18480,24.4,71.8],[18600,24.2,72.1],[18720,23.9,73.1],[18840,23.7,73.4],[18960,23.4,73.5],[19080,23.3,73.6],[19200,23.3,73.7],[19320,23.6,74.1],[19440,23.8,74.4],[19560,23.9,74.3],[19680,23.9,75.1],[19800,23.9,75.9],[19920,23.9,75.8],[20040,23.8,75.7],[20160,23.7,76.4],[20280,23.6,76.5],[20400,23.5,76.7],[20520,23.4,76.7],[20640,23.5,76.7],[20760,23.9,75.1],[20880,24.5,70.4],[21000,25.0,68.0],[21120,25.1,65.3],[21240,25.1,64.6],[21360,24.8,65.1],[21480,24.9,67.6],[21600,24.7,68.9],[21720,24.4,70.1],[21840,24.2,70.8],[21960,23.9,71.2],[22080,23.9,71.6],[22200,24.2,71.4],[22320,24.7,67.2],[22440,25.1,66.6],[22560,25.1,64.0],[22680,24.8,64.4],[22800,24.8,66.1],[22920,24.7,67.9],[23040,24.6,69.2],[23160,24.4,70.1],[23280,24.2,70.9],[23400,24.0,71.4],[23520,24.0,71.7],[23640,24.3,69.1],[23760,25.2,48.9],[23880,25.2,45.9],[24000,25.3,53.4],[24120,25.3,54.8],[24240,25.2,55.7],[24360,25.1,55.9],[24480,24.8,56.3],[24600,24.8,56.7],[24720,25.2,56.9],[24840,25.7,58.4],[24960,25.2,56.6],[25080,25.0,56.1],[25200,25.8,54.6],[25320,25.6,51.0],[25440,25.5,53.5],[25560,25.4,56.3],[25680,25.6,57.6],[25800,25.6,59.8],[25920,25.5,61.7],[26040,25.3,63.1],[26160,25.2,64.0],[26280,24.9,64.6],[26400,24.8,65.1],[26520,24.7,65.7],[26640,24.6,65.8],[26760,24.7,65.2],[26880,24.7,65.8],[27000,24.6,66.6],[27120,24.4,66.7],[27240,24.2,66.8],[27360,23.9,67.2],[27480,23.7,67.6],[27600,23.6,67.8],[27720,23.4,68.1],[27840,23.3,68.4],[27960,23.3,68.9],[28080,23.4,68.4],[28200,23.7,68.4],[28320,24.1,68.6],[28440,24.3,68.0],[28560,24.2,68.3],[28680,24.0,68.2],[28800,23.8,68.5],[28920,23.6,69.0],[29040,23.3,69.0],[29160,23.1,69.3],[29280,22.9,69.8],[29400,23.6,69.8],[29520,24.3,68.1],[29640,24.9,64.8],[29760,25.4,62.6],[29880,25.3,62.2],[30000,25.4,63.8],[30120,25.2,64.8],[30240,24.9,66.0],[30360,24.6,66.5],[30480,24.1,66.8],[30600,23.7,67.2],[30720,23.7,67.5],[30840,24.2,65.4],[30960,24.8,65.2],[31080,25.1,60.6],[31200,25.3,59.8],[31320,25.3,59.5],[31440,25.1,60.0],[31560,25.2,62.1],[31680,24.9,64.0],[31800,24.5,64.6],[31920,24.2,65.1],[32040,23.9,65.7],[32160,24.0,65.8],[32280,24.7,65.1],[32400,25.2,61.8],[32520,25.3,56.4],[32640,25.2,53.6],[32760,25.8,53.9],[32880,25.6,54.0],[33000,25.6,54.5],[33120,25.3,53.6],[33240,25.3,54.1],[33360,25.1,54.1],[33480,25.1,54.9],[33600,25.0,55.0],[33720,25.8,53.6],[33840,26.4,51.8],[33960,26.4,51.9],[34080,26.1,52.4],[34200,25.7,56.0],[34320,25.9,56.1],[34440,25.8,56.4],[34560,25.8,57.3],[34680,25.6,57.7],[34800,25.4,58.8],[34920,25.3,59.2],[35040,25.4,60.1],[35160,25.7,59.5],[35280,25.3,57.3]]},{"id":"north","name":"⑤北側保管室","data":[[835,25.8,56.5],[955,30.9,60.9],[1075,30.3,64.3],[1195,29.3,68.3],[1315,28.7,70.0],[1435,28.2,71.9],[1555,27.7,73.4],[1675,27.3,74.6],[1795,26.9,75.5],[1915,27.0,77.9],[2035,27.4,79.2],[2155,27.9,80.3],[2275,29.5,79.8],[2395,30.6,77.7],[2515,29.9,76.2],[2635,29.4,76.4],[2755,28.8,76.7],[2875,28.1,77.5],[2995,27.6,77.7],[3115,27.1,78.1],[3235,26.8,78.2],[3355,26.7,79.5],[3475,26.7,79.9],[3595,26.4,72.6],[3715,26.1,69.3],[3835,25.7,68.0],[3955,25.4,70.4],[4075,25.2,73.8],[4195,25.0,75.6],[4315,24.8,76.6],[4435,24.7,77.6],[4555,24.6,78.4],[4675,24.5,78.9],[4795,24.5,81.5],[4915,25.1,82.6],[5035,26.1,81.1],[5155,26.1,80.6],[5275,26.0,80.1],[5395,25.9,80.1],[5515,25.6,79.8],[5635,25.3,80.1],[5755,25.1,80.9],[5875,24.8,81.4],[5995,24.7,81.9],[6115,24.5,82.2],[6235,24.6,83.4],[6355,25.4,85.3],[6475,27.4,82.4],[6595,28.8,80.2],[6715,29.4,77.2],[6835,29.4,74.5],[6955,28.6,76.0],[7075,27.7,75.1],[7195,27.0,75.5],[7315,26.4,75.2],[7435,25.9,76.2],[7555,25.6,77.2],[7675,25.8,80.4],[7795,27.3,80.9],[7915,29.8,77.7],[8035,30.7,76.2],[8155,30.5,72.5],[8275,30.4,73.1],[8395,29.7,71.8],[8515,28.8,70.9],[8635,28.0,70.7],[8755,27.4,72.3],[8875,26.9,72.6],[8995,26.5,73.7],[9115,26.7,78.0],[9235,27.8,77.7],[9355,29.3,75.3],[9475,29.7,72.8],[9595,30.4,72.4],[9715,30.5,69.0],[9835,29.7,69.1],[9955,28.9,68.6],[10075,28.2,69.2],[10195,27.5,70.5],[10315,26.9,71.5],[10435,26.4,73.1],[10555,26.4,75.2],[10675,27.6,75.9],[10795,29.1,71.3],[10915,29.8,64.0],[11035,30.7,64.2],[11155,30.7,60.5],[11275,30.1,65.5],[11395,29.3,66.3],[11515,28.4,67.2],[11635,27.6,67.5],[11755,26.8,68.1],[11875,26.2,69.2],[11995,26.3,72.9],[12115,27.4,72.1],[12235,29.2,67.7],[12355,28.7,66.5],[12475,28.1,67.6],[12595,27.4,68.2],[12715,26.8,70.2],[12835,26.3,71.2],[12955,25.8,72.0],[13075,25.6,72.8],[13195,25.3,73.2],[13315,25.1,73.8],[13435,25.1,74.9],[13555,25.2,75.2],[13675,25.2,76.4],[13795,25.3,76.7],[13915,25.4,76.6],[14035,25.3,76.8],[14155,25.1,76.5],[14275,24.8,77.3],[14395,24.6,77.5],[14515,24.3,77.8],[14635,24.2,78.3],[14755,24.0,78.3],[14875,23.9,78.3],[14995,24.0,79.3],[15115,24.2,80.2],[15235,24.6,80.3],[15355,24.7,80.5],[15475,24.6,81.1],[15595,24.4,80.3],[15715,24.1,80.6],[15835,23.9,80.7],[15955,23.7,80.8],[16075,23.6,80.9],[16195,23.5,81.1],[16315,23.4,80.8],[16435,23.5,81.3],[16555,23.7,81.9],[16675,23.8,82.0],[16795,23.8,82.5],[16915,23.7,82.2],[17035,23.5,82.2],[17155,23.2,81.9],[17275,22.9,81.6],[17395,22.6,81.4],[17515,22.4,81.3],[17635,22.2,81.4],[17755,22.2,82.0],[17875,22.6,83.7],[17995,23.3,84.5],[18115,23.8,83.6],[18235,24.2,83.0],[18355,24.2,82.6],[18475,23.9,82.5],[18595,23.6,82.4],[18715,23.3,81.9],[18835,23.1,81.5],[18955,22.8,81.5],[19075,22.6,81.7],[19195,22.7,82.7],[19315,23.1,84.0],[19435,23.4,84.2],[19555,23.6,83.4],[19675,23.6,84.1],[19795,23.7,84.4],[19915,23.7,85.1],[20035,23.6,84.5],[20155,23.5,84.4],[20275,23.4,84.3],[20395,23.3,84.4],[20515,23.3,84.6],[20635,23.3,85.6],[20755,23.9,87.6],[20875,25.4,90.4],[20995,26.7,87.5],[21115,27.1,84.9],[21235,26.8,82.5],[21355,26.1,82.1],[21475,25.3,82.1],[21595,24.8,81.8],[21715,24.2,81.2],[21835,23.7,80.8],[21955,23.4,80.7],[22075,23.4,81.6],[22195,24.0,84.6],[22315,27.1,66.4],[22435,28.7,67.9],[22555,29.2,66.6],[22675,29.1,65.4],[22795,28.4,64.8],[22915,27.9,64.0],[23035,27.3,63.8],[23155,26.9,63.4],[23275,26.6,63.3],[23395,26.4,63.3],[23515,26.4,63.7],[23635,27.1,63.9],[23755,27.2,66.9],[23875,27.3,67.6],[23995,27.1,67.6],[24115,26.7,65.5],[24235,26.1,68.1],[24355,25.6,69.1],[24475,25.2,70.8],[24595,24.8,72.2],[24715,24.6,72.9],[24835,24.4,74.9],[24955,24.2,75.2],[25075,24.3,74.7],[25195,25.0,74.5],[25315,25.6,74.1],[25435,25.8,72.4],[25555,25.8,71.1],[25675,25.5,69.5],[25795,25.1,70.4],[25915,24.7,70.3],[26035,24.3,71.2],[26155,24.0,71.1],[26275,23.7,73.6],[26395,23.5,73.1],[26515,23.4,73.5],[26635,23.5,72.7],[26755,23.6,73.2],[26875,23.6,76.7],[26995,23.5,76.5],[27115,23.2,75.2],[27235,22.9,75.0],[27355,22.6,74.7],[27475,22.3,74.7],[27595,22.2,74.8],[27715,22.0,75.0],[27835,21.9,75.5],[27955,21.9,76.6],[28075,22.2,78.1],[28195,22.6,79.7],[28315,23.1,80.2],[28435,23.3,77.3],[28555,23.1,79.4],[28675,22.8,78.1],[28795,22.4,76.1],[28915,22.2,76.1],[29035,21.9,75.6],[29155,21.6,75.2],[29275,21.6,76.8],[29395,22.3,76.1],[29515,23.6,73.0],[29635,24.9,73.3],[29755,25.1,75.2],[29875,25.0,73.3],[29995,24.4,74.5],[30115,23.9,75.0],[30235,23.4,73.9],[30355,23.0,72.0],[30475,22.6,71.2],[30595,22.1,71.3],[30715,22.1,74.3],[30835,23.2,72.7],[30955,24.1,71.7],[31075,25.3,70.2],[31195,25.8,71.5],[31315,25.6,71.0],[31435,25.1,68.9],[31555,24.3,72.0],[31675,23.7,70.6],[31795,23.2,69.8],[31915,22.7,70.2],[32035,22.4,70.7],[32155,22.6,73.4],[32275,23.7,72.8],[32395,26.1,68.8],[32515,27.4,71.9],[32635,27.6,72.0],[32755,27.2,71.7],[32875,26.6,69.7],[32995,26.2,69.0],[33115,25.8,69.2],[33235,25.6,68.0],[33355,25.3,67.6],[33475,25.1,68.1],[33595,25.1,72.0],[33715,26.2,74.7],[33835,28.4,67.2],[33955,29.7,69.1],[34075,29.6,70.5],[34195,29.3,71.9],[34315,28.8,71.0],[34435,28.2,69.4],[34555,27.6,68.8],[34675,27.0,69.4],[34795,26.6,70.3],[34915,26.3,71.4],[35035,26.2,72.1],[35155,26.9,75.3],[35275,28.4,74.5]]}],"outdoor":[[0,24.3,93.0],[60,23.9,92.0],[120,23.4,91.0],[180,23.3,93.0],[240,22.6,93.0],[300,22.8,93.0],[360,24.3,94.0],[420,26.3,89.0],[480,28.5,77.0],[540,30.4,68.0],[600,31.3,65.0],[660,31.2,68.0],[720,30.8,73.0],[780,30.4,75.0],[840,30.0,75.0],[900,30.6,71.0],[960,29.5,75.0],[1020,28.5,80.0],[1080,27.4,85.0],[1140,26.2,90.0],[1200,25.9,91.0],[1260,26.6,91.0],[1320,26.0,93.0],[1380,25.7,95.0],[1440,25.5,95.0],[1500,25.1,96.0],[1560,25.3,96.0],[1620,25.1,99.0],[1680,24.5,100.0],[1740,24.7,99.0],[1800,26.1,92.0],[1860,27.9,85.0],[1920,29.6,77.0],[1980,31.3,65.0],[2040,30.8,69.0],[2100,31.1,69.0],[2160,31.9,65.0],[2220,33.0,61.0],[2280,31.9,70.0],[2340,30.5,78.0],[2400,29.0,85.0],[2460,28.2,89.0],[2520,27.7,90.0],[2580,26.8,93.0],[2640,25.9,95.0],[2700,25.7,90.0],[2760,25.2,94.0],[2820,24.6,97.0],[2880,24.3,98.0],[2940,23.9,99.0],[3000,23.8,99.0],[3060,24.4,97.0],[3120,24.1,99.0],[3180,24.3,97.0],[3240,24.8,94.0],[3300,25.1,93.0],[3360,25.6,91.0],[3420,26.2,91.0],[3480,26.4,90.0],[3540,26.1,92.0],[3600,26.3,90.0],[3660,26.3,91.0],[3720,26.0,91.0],[3780,27.1,86.0],[3840,26.6,87.0],[3900,25.7,88.0],[3960,24.5,91.0],[4020,23.8,93.0],[4080,23.5,94.0],[4140,24.5,90.0],[4200,23.8,94.0],[4260,23.7,93.0],[4320,23.5,93.0],[4380,23.4,93.0],[4440,23.2,93.0],[4500,23.6,93.0],[4560,23.0,96.0],[4620,22.9,97.0],[4680,23.6,95.0],[4740,25.0,88.0],[4800,26.1,82.0],[4860,25.5,88.0],[4920,25.8,88.0],[4980,26.3,84.0],[5040,26.6,82.0],[5100,26.0,86.0],[5160,25.4,88.0],[5220,25.5,90.0],[5280,25.2,91.0],[5340,25.0,90.0],[5400,24.5,91.0],[5460,23.9,92.0],[5520,23.6,93.0],[5580,24.1,92.0],[5640,23.4,94.0],[5700,23.0,95.0],[5760,22.6,95.0],[5820,22.4,95.0],[5880,22.3,96.0],[5940,22.6,96.0],[6000,22.2,98.0],[6060,22.2,98.0],[6120,23.5,94.0],[6180,25.1,86.0],[6240,27.3,76.0],[6300,28.7,74.0],[6360,29.8,72.0],[6420,29.5,77.0],[6480,29.5,80.0],[6540,28.7,83.0],[6600,29.1,81.0],[6660,29.1,81.0],[6720,28.5,83.0],[6780,28.2,84.0],[6840,27.9,86.0],[6900,26.4,92.0],[6960,25.7,95.0],[7020,26.1,93.0],[7080,25.6,94.0],[7140,25.4,94.0],[7200,25.1,93.0],[7260,25.0,91.0],[7320,24.8,90.0],[7380,25.1,93.0],[7440,24.4,94.0],[7500,24.4,94.0],[7560,26.0,90.0],[7620,27.9,85.0],[7680,30.2,77.0],[7740,30.1,75.0],[7800,30.4,79.0],[7860,31.5,73.0],[7920,32.6,72.0],[7980,33.0,72.0],[8040,31.1,79.0],[8100,31.8,77.0],[8160,31.7,74.0],[8220,31.1,77.0],[8280,29.7,85.0],[8340,28.8,90.0],[8400,28.4,91.0],[8460,28.7,92.0],[8520,28.1,92.0],[8580,27.4,93.0],[8640,26.4,96.0],[8700,25.9,95.0],[8760,25.5,93.0],[8820,26.2,92.0],[8880,25.8,91.0],[8940,25.7,90.0],[9000,27.1,89.0],[9060,28.7,86.0],[9120,30.2,79.0],[9180,32.3,68.0],[9240,33.4,61.0],[9300,34.1,58.0],[9360,32.7,69.0],[9420,30.9,79.0],[9480,31.7,72.0],[9540,32.5,65.0],[9600,31.2,73.0],[9660,30.2,79.0],[9720,29.5,84.0],[9780,28.1,91.0],[9840,27.4,93.0],[9900,27.4,97.0],[9960,26.4,99.0],[10020,25.8,100.0],[10080,25.4,100.0],[10140,25.3,100.0],[10200,25.0,100.0],[10260,25.0,100.0],[10320,24.2,100.0],[10380,24.0,97.0],[10440,25.5,94.0],[10500,27.1,90.0],[10560,28.7,84.0],[10620,30.9,75.0],[10680,31.7,72.0],[10740,31.8,71.0],[10800,31.6,78.0],[10860,30.8,81.0],[10920,31.5,77.0],[10980,33.2,57.0],[11040,32.5,60.0],[11100,31.8,66.0],[11160,30.0,76.0],[11220,28.6,73.0],[11280,27.5,74.0],[11340,27.5,76.0],[11400,26.6,78.0],[11460,25.9,80.0],[11520,25.1,84.0],[11580,24.4,87.0],[11640,24.0,89.0],[11700,24.5,90.0],[11760,24.0,90.0],[11820,24.2,90.0],[11880,25.8,86.0],[11940,27.2,83.0],[12000,28.5,78.0],[12060,30.5,69.0],[12120,30.5,71.0],[12180,29.1,76.0],[12240,26.9,83.0],[12300,26.3,84.0],[12360,26.1,81.0],[12420,25.9,84.0],[12480,25.3,85.0],[12540,24.9,86.0],[12600,24.1,88.0],[12660,23.5,90.0],[12720,23.2,90.0],[12780,24.1,87.0],[12840,23.7,89.0],[12900,23.5,89.0],[12960,23.3,91.0],[13020,23.2,91.0],[13080,23.0,92.0],[13140,23.2,92.0],[13200,23.0,92.0],[13260,22.9,93.0],[13320,23.2,92.0],[13380,23.7,90.0],[13440,24.1,89.0],[13500,24.4,89.0],[13560,24.2,89.0],[13620,24.3,89.0],[13680,24.9,90.0],[13740,24.5,94.0],[13800,25.3,93.0],[13860,24.5,92.0],[13920,24.3,94.0],[13980,23.8,96.0],[14040,23.5,98.0],[14100,23.0,98.0],[14160,22.6,99.0],[14220,22.4,96.0],[14280,22.1,97.0],[14340,22.0,97.0],[14400,22.1,97.0],[14460,22.0,97.0],[14520,21.9,97.0],[14580,22.4,97.0],[14640,22.0,98.0],[14700,22.1,97.0],[14760,22.5,96.0],[14820,22.9,96.0],[14880,23.0,96.0],[14940,23.3,95.0],[15000,23.7,94.0],[15060,23.5,94.0],[15120,24.2,90.0],[15180,24.7,88.0],[15240,24.8,90.0],[15300,23.5,94.0],[15360,23.3,93.0],[15420,23.0,95.0],[15480,22.7,96.0],[15540,22.4,96.0],[15600,22.2,97.0],[15660,22.3,97.0],[15720,22.0,98.0],[15780,22.0,99.0],[15840,21.8,99.0],[15900,21.6,99.0],[15960,21.4,99.0],[16020,21.7,99.0],[16080,21.4,98.0],[16140,21.5,98.0],[16200,21.8,98.0],[16260,22.1,97.0],[16320,21.8,97.0],[16380,22.3,96.0],[16440,22.8,94.0],[16500,23.0,94.0],[16560,22.8,95.0],[16620,22.2,97.0],[16680,22.1,97.0],[16740,22.3,96.0],[16800,22.1,97.0],[16860,22.0,97.0],[16920,21.6,98.0],[16980,21.2,98.0],[17040,20.8,97.0],[17100,21.4,97.0],[17160,21.0,97.0],[17220,20.7,98.0],[17280,20.3,98.0],[17340,20.0,98.0],[17400,19.9,97.0],[17460,19.7,96.0],[17520,19.4,96.0],[17580,19.4,96.0],[17640,19.7,95.0],[17700,20.4,93.0],[17760,21.2,88.0],[17820,21.9,87.0],[17880,22.9,80.0],[17940,23.1,78.0],[18000,23.2,78.0],[18060,23.7,77.0],[18120,24.4,74.0],[18180,24.4,74.0],[18240,23.9,76.0],[18300,23.2,79.0],[18360,22.3,83.0],[18420,21.3,89.0],[18480,20.9,91.0],[18540,21.6,89.0],[18600,21.1,89.0],[18660,20.5,92.0],[18720,20.2,93.0],[18780,19.6,95.0],[18840,18.9,98.0],[18900,19.7,95.0],[18960,19.8,96.0],[19020,19.9,95.0],[19080,20.6,93.0],[19140,21.5,89.0],[19200,22.3,85.0],[19260,23.7,82.0],[19320,24.6,81.0],[19380,24.5,83.0],[19440,25.3,80.0],[19500,25.3,81.0],[19560,24.3,88.0],[19620,24.4,88.0],[19680,23.8,92.0],[19740,23.0,98.0],[19800,22.7,98.0],[19860,22.5,99.0],[19920,22.1,99.0],[19980,22.5,99.0],[20040,21.8,99.0],[20100,21.9,99.0],[20160,21.9,98.0],[20220,21.8,98.0],[20280,21.2,99.0],[20340,22.2,98.0],[20400,21.8,100.0],[20460,21.6,99.0],[20520,22.0,99.0],[20580,23.1,98.0],[20640,24.4,94.0],[20700,26.4,84.0],[20760,27.4,82.0],[20820,28.7,77.0],[20880,29.4,72.0],[20940,30.5,66.0],[21000,29.2,72.0],[21060,28.8,66.0],[21120,28.5,66.0],[21180,27.4,70.0],[21240,25.6,81.0],[21300,24.6,80.0],[21360,23.8,79.0],[21420,23.5,80.0],[21480,22.9,82.0],[21540,22.6,90.0],[21600,22.3,91.0],[21660,21.8,92.0],[21720,21.8,93.0],[21780,21.9,95.0],[21840,22.1,93.0],[21900,22.2,93.0],[21960,23.1,91.0],[22020,24.6,87.0],[22080,26.2,81.0],[22140,28.1,79.0],[22200,29.2,71.0],[22260,30.4,65.0],[22320,31.0,63.0],[22380,30.2,63.0],[22440,30.2,66.0],[22500,30.0,68.0],[22560,28.6,77.0],[22620,28.4,76.0],[22680,27.1,82.0],[22740,25.7,84.0],[22800,25.1,85.0],[22860,24.8,83.0],[22920,23.8,86.0],[22980,22.7,90.0],[23040,22.3,92.0],[23100,21.8,94.0],[23160,21.9,94.0],[23220,22.6,94.0],[23280,22.4,93.0],[23340,22.1,94.0],[23400,22.9,91.0],[23460,24.2,89.0],[23520,25.3,82.0],[23580,27.0,79.0],[23640,27.9,75.0],[23700,28.2,72.0],[23760,27.7,75.0],[23820,28.4,72.0],[23880,28.6,72.0],[23940,28.4,69.0],[24000,27.6,77.0],[24060,26.8,83.0],[24120,25.5,88.0],[24180,24.5,91.0],[24240,24.4,90.0],[24300,23.0,98.0],[24360,22.6,99.0],[24420,22.4,99.0],[24480,22.2,99.0],[24540,22.3,99.0],[24600,22.4,99.0],[24660,22.9,99.0],[24720,22.6,100.0],[24780,22.6,99.0],[24840,22.4,99.0],[24900,22.0,99.0],[24960,22.4,94.0],[25020,23.5,92.0],[25080,24.5,88.0],[25140,25.2,87.0],[25200,26.2,86.0],[25260,27.0,85.0],[25320,26.2,88.0],[25380,26.4,90.0],[25440,26.6,90.0],[25500,26.4,90.0],[25560,24.6,93.0],[25620,22.8,96.0],[25680,22.3,98.0],[25740,22.3,96.0],[25800,21.6,98.0],[25860,21.5,98.0],[25920,21.3,99.0],[25980,21.2,99.0],[26040,21.0,99.0],[26100,20.5,98.0],[26160,20.3,98.0],[26220,20.2,98.0],[26280,20.2,98.0],[26340,20.4,97.0],[26400,20.8,95.0],[26460,21.2,95.0],[26520,21.4,94.0],[26580,21.6,93.0],[26640,21.9,94.0],[26700,21.9,95.0],[26760,21.9,94.0],[26820,22.0,92.0],[26880,21.4,92.0],[26940,21.1,93.0],[27000,20.9,93.0],[27060,20.5,94.0],[27120,20.2,95.0],[27180,20.5,94.0],[27240,19.9,96.0],[27300,19.7,96.0],[27360,19.4,96.0],[27420,19.2,96.0],[27480,19.1,96.0],[27540,19.5,96.0],[27600,19.2,96.0],[27660,19.2,96.0],[27720,19.4,96.0],[27780,19.8,96.0],[27840,20.2,96.0],[27900,20.5,96.0],[27960,21.0,94.0],[28020,21.3,91.0],[28080,21.7,88.0],[28140,22.4,82.0],[28200,22.8,77.0],[28260,23.4,75.0],[28320,22.7,78.0],[28380,22.1,82.0],[28440,21.5,86.0],[28500,20.4,91.0],[28560,20.0,91.0],[28620,20.4,91.0],[28680,19.9,92.0],[28740,19.6,93.0],[28800,19.8,93.0],[28860,19.8,92.0],[28920,19.6,92.0],[28980,19.9,93.0],[29040,19.2,92.0],[29100,18.9,93.0],[29160,19.6,95.0],[29220,20.1,94.0],[29280,21.6,84.0],[29340,23.2,77.0],[29400,23.7,73.0],[29460,24.2,71.0],[29520,24.2,72.0],[29580,24.2,73.0],[29640,23.8,76.0],[29700,24.2,73.0],[29760,23.2,76.0],[29820,22.7,77.0],[29880,22.0,81.0],[29940,21.1,86.0],[30000,20.8,87.0],[30060,21.2,86.0],[30120,20.6,86.0],[30180,20.2,86.0],[30240,19.9,87.0],[30300,19.4,89.0],[30360,19.0,91.0],[30420,18.8,92.0],[30480,18.2,95.0],[30540,17.9,96.0],[30600,19.2,93.0],[30660,20.6,86.0],[30720,22.5,78.0],[30780,24.1,71.0],[30840,25.3,67.0],[30900,26.4,66.0],[30960,26.2,69.0],[31020,25.7,71.0],[31080,25.3,71.0],[31140,25.0,72.0],[31200,24.6,75.0],[31260,24.0,78.0],[31320,23.1,84.0],[31380,22.0,88.0],[31440,21.5,90.0],[31500,21.9,90.0],[31560,21.3,91.0],[31620,21.1,93.0],[31680,20.4,95.0],[31740,19.7,97.0],[31800,19.3,98.0],[31860,19.6,98.0],[31920,19.0,99.0],[31980,19.0,99.0],[32040,20.8,95.0],[32100,22.6,89.0],[32160,24.4,85.0],[32220,26.5,80.0],[32280,27.8,77.0],[32340,28.0,79.0],[32400,28.3,80.0],[32460,28.1,82.0],[32520,28.0,84.0],[32580,28.3,82.0],[32640,27.9,85.0],[32700,27.4,87.0],[32760,26.8,90.0],[32820,25.5,96.0],[32880,24.8,97.0],[32940,24.9,97.0],[33000,24.1,100.0],[33060,23.7,100.0],[33120,23.5,100.0],[33180,23.3,100.0],[33240,23.3,100.0],[33300,24.2,99.0],[33360,23.6,100.0],[33420,23.5,100.0],[33480,25.0,96.0],[33540,26.2,90.0],[33600,28.0,82.0],[33660,30.5,70.0],[33720,31.4,69.0],[33780,31.7,69.0],[33840,30.7,74.0],[33900,30.5,78.0],[33960,31.0,79.0],[34020,32.1,69.0],[34080,31.1,75.0],[34140,30.4,80.0],[34200,29.4,87.0],[34260,28.0,90.0],[34320,27.4,92.0],[34380,27.8,92.0],[34440,26.9,93.0],[34500,26.4,91.0],[34560,26.0,92.0],[34620,25.5,94.0],[34680,25.2,96.0],[34740,25.5,96.0],[34800,24.9,97.0],[34860,24.8,98.0],[34920,25.8,95.0],[34980,26.9,90.0],[35040,28.4,81.0],[35100,28.9,77.0],[35160,29.5,78.0],[35220,29.9,78.0],[35280,30.1,81.0],[35340,28.4,92.0],[35400,27.2,95.0],[35460,26.2,95.0],[35520,27.2,93.0],[35580,27.4,90.0],[35640,26.3,95.0],[35700,25.6,95.0],[35760,25.2,97.0],[35820,25.2,96.0],[35880,24.7,97.0],[35940,24.5,98.0]],"limits":{"tempLo":20.0,"tempHi":30.0,"rhLo":50.0,"rhHi":60.0}};
+const BASE_MS = Date.UTC(2026, 6, 15);          // 2026-07-15 00:00 (現地時刻をUTC扱いで統一)
+const DAY = 86400000;
+const X_MIN = BASE_MS;
+const X_MAX = Date.UTC(2026, 7, 9);             // 2026-08-09 00:00
+
+const charts = [];
+
+function tokens() {
+  const cs = getComputedStyle(document.body);
+  const g = (n) => cs.getPropertyValue(n).trim();
+  return {
+    series: g('--series'), outdoor: g('--outdoor'), bad: g('--bad'),
+    band: g('--band'), bandEdge: g('--band-edge'),
+    grid: g('--grid'), axis: g('--axis'), muted: g('--muted'), ink2: g('--ink-2'),
+    surface: g('--surface'),
+  };
+}
+
+function fmtTick(ms) {
+  const d = new Date(ms);
+  return (d.getUTCMonth() + 1) + '/' + d.getUTCDate();
+}
+function fmtFull(ms) {
+  const d = new Date(ms);
+  const p = (n) => String(n).padStart(2, '0');
+  return (d.getUTCMonth() + 1) + '/' + d.getUTCDate() + ' ' + p(d.getUTCHours()) + ':' + p(d.getUTCMinutes());
+}
+
+// 目標範囲の帯と上下限の破線を描画するプラグイン
+const bandPlugin = {
+  id: 'band',
+  beforeDatasetsDraw(chart, _args, opts) {
+    if (!opts || opts.lo == null) return;
+    const { ctx, chartArea: a, scales: { y } } = chart;
+    const yLo = y.getPixelForValue(opts.lo);
+    const yHi = y.getPixelForValue(opts.hi);
+    ctx.save();
+    ctx.fillStyle = opts.fill;
+    ctx.fillRect(a.left, yHi, a.right - a.left, yLo - yHi);
+    ctx.strokeStyle = opts.edge;
+    ctx.setLineDash([5, 4]);
+    ctx.lineWidth = 1;
+    [yLo, yHi].forEach((yy) => {
+      ctx.beginPath(); ctx.moveTo(a.left, yy); ctx.lineTo(a.right, yy); ctx.stroke();
+    });
+    ctx.restore();
+  },
+};
+Chart.register(bandPlugin);
+
+function makeChart(canvasId, cfg) {
+  const el = document.getElementById(canvasId);
+  if (!el) return;
+  const tok = tokens();
+  const { indoor, outdoor, lo, hi, yMin, yMax, unit, indoorLabel } = cfg;
+  const out = (v) => v < lo || v > hi;
+
+  const datasets = [];
+  if (outdoor) {
+    datasets.push({
+      label: '外気', data: outdoor, parsing: false,
+      borderColor: tok.outdoor, borderWidth: 1.4, pointRadius: 0,
+      pointHoverRadius: 4, pointHoverBackgroundColor: tok.outdoor,
+      tension: 0, spanGaps: true, order: 2,
+    });
+  }
+  if (indoor) {
+    datasets.push({
+      label: indoorLabel || '室内', data: indoor, parsing: false,
+      borderColor: tok.series, borderWidth: 2,
+      segment: {
+        borderColor: (c) => (out(c.p0.parsed.y) || out(c.p1.parsed.y)) ? tok.bad : tok.series,
+      },
+      pointRadius: (c) => out(c.parsed.y) ? 2.3 : 0,
+      pointBackgroundColor: tok.bad, pointBorderWidth: 0,
+      pointHoverRadius: 4.5,
+      tension: 0, order: 1,
+    });
+  }
+
+  const chart = new Chart(el, {
+    type: 'line',
+    data: { datasets },
+    options: {
+      animation: false, responsive: true, maintainAspectRatio: false,
+      normalized: true,
+      interaction: { mode: 'nearest', axis: 'x', intersect: false },
+      plugins: {
+        legend: { display: false },
+        band: { lo, hi, fill: tok.band, edge: tok.bandEdge },
+        tooltip: {
+          displayColors: false,
+          callbacks: {
+            title: (items) => items.length ? fmtFull(items[0].parsed.x) : '',
+            label: (item) => {
+              const v = item.parsed.y;
+              let s = item.dataset.label + ': ' + v.toFixed(1) + unit;
+              if (item.datasetIndex === datasets.length - 1 && indoor && out(v)) {
+                s += v > hi ? ' (上限超過)' : ' (下限未満)';
+              }
+              return s;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          type: 'linear', min: X_MIN, max: X_MAX,
+          ticks: {
+            stepSize: 3 * DAY, callback: fmtTick,
+            color: tok.muted, font: { size: 11 }, maxRotation: 0,
+          },
+          grid: { color: tok.grid }, border: { color: tok.axis },
+        },
+        y: {
+          min: yMin, max: yMax,
+          ticks: { color: tok.muted, font: { size: 11 } },
+          grid: { color: tok.grid }, border: { color: tok.axis },
+          title: { display: false },
+        },
+      },
+    },
+  });
+  charts.push({ chart, cfg, canvasId });
+}
+
+function toXY(rows, idx) {
+  return rows.map((r) => ({ x: BASE_MS + r[0] * 60000, y: r[idx] }));
+}
+
+function buildAll() {
+  charts.forEach((c) => c.chart.destroy());
+  charts.length = 0;
+  Chart.defaults.font.family = "'Noto Sans JP', 'Hiragino Kaku Gothic ProN', Meiryo, system-ui, sans-serif";
+  const L = DATA.limits;
+  const outdoorT = toXY(DATA.outdoor, 1);
+  const outdoorH = toXY(DATA.outdoor, 2);
+  DATA.rooms.forEach((room) => {
+    makeChart('c-' + room.id + '-t', {
+      indoor: toXY(room.data, 1), outdoor: outdoorT,
+      lo: L.tempLo, hi: L.tempHi, yMin: 15, yMax: 35, unit: '℃',
+    });
+    makeChart('c-' + room.id + '-h', {
+      indoor: toXY(room.data, 2), outdoor: outdoorH,
+      lo: L.rhLo, hi: L.rhHi, yMin: 30, yMax: 100, unit: '%',
+    });
+  });
+  makeChart('c-out-t', {
+    indoor: null, outdoor: outdoorT,
+    lo: L.tempLo, hi: L.tempHi, yMin: 15, yMax: 35, unit: '℃',
+  });
+  makeChart('c-out-h', {
+    indoor: null, outdoor: outdoorH,
+    lo: L.rhLo, hi: L.rhHi, yMin: 30, yMax: 100, unit: '%',
+  });
+}
+
+buildAll();
+
+// テーマ変更(OS設定・ビューア側トグルの両方)に追従して再描画する
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', buildAll);
+new MutationObserver(buildAll).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+</script>

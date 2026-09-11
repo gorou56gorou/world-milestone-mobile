@@ -1,0 +1,37 @@
+name: fetch-outdoor-weather
+
+# 収蔵庫の温湿度分析用に、宮城県柴田町(船岡付近)の外気温・湿度を
+# Open-Meteo ERA5 アーカイブ API から取得してブランチにコミットする。
+# 実行環境のネットワーク制限で直接取得できないため、Actions ランナー経由で取得する。
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/temperature-humidity-analysis-nyh22h
+    paths:
+      - .github/workflows/fetch-outdoor-weather.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch Open-Meteo ERA5 hourly data (Shibata, Miyagi)
+        run: |
+          mkdir -p analysis/data
+          curl -sS --retry 3 \
+            "https://archive-api.open-meteo.com/v1/archive?latitude=38.0561&longitude=140.7656&start_date=2026-07-15&end_date=2026-08-08&hourly=temperature_2m,relative_humidity_2m&timezone=Asia%2FTokyo" \
+            -o analysis/data/outdoor_shibata.json
+          python3 -m json.tool analysis/data/outdoor_shibata.json > /dev/null
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add analysis/data/outdoor_shibata.json
+          git commit -m "chore: 柴田町の外気温・湿度データを追加 (Open-Meteo ERA5)" || echo "no changes"
+          git push
